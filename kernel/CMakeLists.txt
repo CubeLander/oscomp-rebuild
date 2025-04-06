@@ -31,50 +31,19 @@ add_executable(riscv-pke ${KERNEL_SOURCES} ${KERNEL_ASM_SOURCES})
 # 修改后的头文件包含路径，只保留include/和vendor/musl/include/
 target_include_directories(riscv-pke PRIVATE 
     ${CMAKE_SOURCE_DIR}/include
-    # ${CMAKE_SOURCE_DIR}/include/riscv64-linux-gnu
-    # ${CMAKE_SOURCE_DIR}/include/gcc13
     ${CMAKE_SOURCE_DIR}/vendor/musl/include
-	${CMAKE_SOURCE_DIR}/vendor/musl/arch/generic
-	${CMAKE_SOURCE_DIR}/vendor/musl/arch/riscv64
-	${CMAKE_SOURCE_DIR}/vendor/musl/obj/include
+    ${CMAKE_SOURCE_DIR}/vendor/musl/arch/generic
+    ${CMAKE_SOURCE_DIR}/vendor/musl/arch/riscv64
+    ${CMAKE_SOURCE_DIR}/vendor/musl/obj/include
+    ${CMAKE_BINARY_DIR}/vendor/musl/temp_install/include
 )
 
-# 添加 lwext4 静态库
-add_library(lwext4 STATIC IMPORTED)
-set_target_properties(lwext4 PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/lib/liblwext4.a)
+# 关键修改: 确保内核依赖于musl库和lwext4库的构建
+# 需要明确依赖musl_build目标，因为它是ExternalProject创建的实际构建目标
+add_dependencies(riscv-pke musl_build lwext4)
 
-# 添加 libc.a 静态库
-add_library(c STATIC IMPORTED)
-set_target_properties(c PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/lib/libc.a)
-
-# 链接静态库
-target_link_libraries(riscv-pke PRIVATE lwext4 c)
-
-set(DEBUG_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/debug)
-# 生成详细的调试信息
-add_custom_command(
-    TARGET riscv-pke
-    POST_BUILD
-    COMMAND mkdir -p ${DEBUG_OUTPUT_DIRECTORY}
-    # 详细反汇编，包含源代码
-    COMMAND riscv64-unknown-elf-objdump -D -S ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.dump
-    # 完整的ELF分析
-    COMMAND riscv64-unknown-elf-readelf -a ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.elfinfo
-    # 符号表信息
-    COMMAND riscv64-unknown-elf-nm -n -S ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.symbols
-    # 仅全局符号
-    COMMAND riscv64-unknown-elf-nm -g ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.global-symbols
-    # 链接映射信息
-    COMMAND riscv64-unknown-elf-objdump --all-headers ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.headers
-    # 段信息
-    COMMAND riscv64-unknown-elf-objdump -h ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.sections
-    # 字符串信息
-    COMMAND riscv64-unknown-elf-strings ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.strings
-    # 尝试反汇编带有重定位信息
-    COMMAND riscv64-unknown-elf-objdump -r -d ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.reloc
-    # 查看动态符号和依赖关系
-    COMMAND riscv64-unknown-elf-readelf -d ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.dynamic
-    # 生成链接图
-    COMMAND riscv64-unknown-elf-size ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.size
-    COMMENT "Generating comprehensive debug information for riscv-pke in ${DEBUG_OUTPUT_DIRECTORY}"
+# 直接链接库文件，确保它们已经构建完成
+target_link_libraries(riscv-pke PRIVATE 
+    ${CMAKE_BINARY_DIR}/lib/liblwext4.a
+    ${CMAKE_BINARY_DIR}/lib/libc.a
 )

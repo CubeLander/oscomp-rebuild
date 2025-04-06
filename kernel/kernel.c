@@ -147,7 +147,9 @@ void s_start(uintptr_t hartid, uintptr_t dtb) {
 	//  写入satp寄存器并刷新tlb缓存
 	//    从这里开始，所有内存访问都通过MMU进行虚实转换
 
-	kprintf("Switch to user mode...\n");
+	kprintf("Switch to user mode.....\n");
+
+
 	// the application code (elf) is first loaded into memory, and then put into
 	// execution added @lab3_1
 	create_init_process();
