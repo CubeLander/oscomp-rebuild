@@ -12,7 +12,7 @@ VENDOR_DIR := $(PROJECT_ROOT)/vendor
 SCRIPT_DIR := $(PROJECT_ROOT)/script
 
 # MUSL 构建目标
-.PHONY: musl musl-clean build kernel busybox run gdb gdb-client clean rebuild lwext4 example-with-musl cmake-build submodule
+.PHONY: musl musl-clean build kernel busybox run gdb gdbc clean rebuild lwext4 example-with-musl cmake-build submodule
 .PHONY: debug-all debug-disasm debug-symbols debug-elfinfo debug-headers debug-sections debug-strings debug-reloc debug-dynamic debug-size
 .PHONY: fs-image fs-dirs fs-configs fs-install-busybox fs-install-user
 
@@ -69,7 +69,7 @@ gdb:
   -s -S
 
 # GDB 客户端
-gdb-client:
+gdbc:
 	riscv64-unknown-elf-gdb -x gdbinit.txt build/bin/riscv-pke -q
 
 # 清理构建

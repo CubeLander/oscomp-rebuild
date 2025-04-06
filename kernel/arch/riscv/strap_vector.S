@@ -1,8 +1,7 @@
-
+#include <kernel/config.h>
 #define ERROR_KERNEL_STACK 0x1001
 #define SBI_LEGACY_PUTCHAR_NUM 0x01
 #define SBI_LEGACY_GETCHAR_NUM 0x02
-#define SSTATUS_SIE 0x02 
 .section trapsec
 .globl trap_sec_start
 trap_sec_start:
@@ -21,8 +20,6 @@ trap_sec_start:
 .globl smode_trap_vector
 .align 4
 smode_trap_vector:
-	# 首先关中断。 
-	csrrc t0, sstatus, SSTATUS_SIE
     # 首先保存关键CSR到一些临时寄存器
     csrr     s1, sepc    # 保存sepc到s1
     csrr     s2, scause  # 保存scause到s2
@@ -99,6 +96,9 @@ smode_trap_vector:
 	call smode_trap_handler
     # jump to smode_trap_handler() that is defined in kernel/trap.c
     # call t0
+jump_to_handler:
+    li      s11, 0               # 重置计数器
+    j       smode_trap_handler   # 直接跳转到中断处理程序
 #
 # return from Supervisor mode to User mode, transition is made by using a trapframe,
 # which stores the context of a user application.
@@ -111,8 +111,8 @@ return_to_user:
     # a1: user page table, for satp.
 
     # switch to the user page table. added @lab2_1
-    csrw satp, a1
-    sfence.vma zero, zero
+    # csrw satp, a1
+    # sfence.vma zero, zero
 
     # [sscratch]=[a0], save a0 in sscratch, so sscratch points to a trapframe now.
     csrw sscratch, a0
@@ -157,3 +157,258 @@ return_to_user:
 
     # return to user mode and user pc.
     sret
+
+
+
+
+# 栈错误处理
+stack_error:
+    # 切换到紧急栈
+    la        sp, emergency_stack_top
+    
+    # 输出错误头部
+    la        a2, error_header
+    call      print_string
+    
+    # 直接输出错误代码（硬编码为KERNEL_STACK_ERROR）
+    li        a2, ERROR_KERNEL_STACK
+    call      print_hex
+    
+    # 输出失效地址信息
+    la        a2, addr_msg
+    call      print_string
+    mv        a2, t6  # 直接使用t6而不是a1
+    call      print_hex
+    
+    # 输出sepc
+    la        a2, sepc_msg
+    call      print_string
+    mv        a2, s1     # 使用之前保存的sepc值
+    call      print_hex
+    
+    # 输出scause
+    la        a2, scause_msg
+    call      print_string
+    mv        a2, s2     # 使用之前保存的scause值
+    call      print_hex
+    
+    # 输出stval
+    la        a2, stval_msg
+    call      print_string
+    csrr      a2, stval
+    call      print_hex
+    
+    # 输出sstatus
+    la        a2, sstatus_msg
+    call      print_string
+    csrr      a2, sstatus
+    call      print_hex
+    
+    # 输出结束信息并停止系统
+    la        a2, fatal_end_msg
+    call      print_string
+    j         system_halt
+
+
+
+# 致命错误报告函数
+# 参数: a0 = 错误代码, a1 = 出错地址
+report_fatal_error:
+    # 输出错误头部
+    la        a2, error_header
+    call      print_string
+    
+    # 输出错误代码
+    mv        a2, a0
+    call      print_hex
+    
+    # 输出出错地址
+    la        a2, addr_msg
+    call      print_string
+    mv        a2, a1
+    call      print_hex
+    
+    # 保存并获取关键寄存器值
+    csrr      a2, sepc
+    sd        a2, 40(sp)           # 保存 sepc 到栈上
+    
+    # 输出sepc
+    la        a2, sepc_msg
+    call      print_string
+    mv        a2, s1     # 使用之前保存的sepc值
+    call      print_hex
+    
+    # 输出 scause
+    la        a2, sepc_msg
+    call      print_string
+    mv        a2, s2     # 使用之前保存的sepc值
+    call      print_hex
+    
+    # 输出 stval
+    la        a2, sepc_msg
+    call      print_string
+    mv        a2, s3     # 使用之前保存的sepc值
+    call      print_hex
+    
+    # 输出 sstatus
+    la        a2, sepc_msg
+    call      print_string
+    mv        a2, s4     # 使用之前保存的sepc值
+    call      print_hex
+    
+    # 输出当前线程信息（如果可能）
+    # 可扩展更多信息...
+    
+    # 输出结束消息
+    la        a2, fatal_end_msg
+    call      print_string
+    
+    # 返回调用者
+    ret
+# 系统停止函数
+system_halt:
+    # 禁用所有中断
+    csrci     sstatus, 2     # 清除 SIE 位
+    
+    # 输出关机消息
+    la        a2, halt_msg
+    call      print_string
+    
+halt_loop:
+    wfi                      # 等待中断（省电）
+    j         halt_loop      # 永远循环
+
+# ===== 辅助函数 =====
+
+# 打印字符串函数
+# 参数: a2 = 字符串指针
+print_string:
+    mv        t0, a2
+str_loop:
+    lb        t1, 0(t0)
+    beqz      t1, str_done
+    mv        a0, t1
+    
+    # 保存寄存器
+    addi      sp, sp, -32
+    sd        a0, 0(sp)
+    sd        a1, 8(sp)
+    sd        a2, 16(sp)
+    sd        ra, 24(sp)
+    
+    # 调用 SBI_PUTCHAR
+    mv        a0, t1
+    li        a1, 0
+    li        a2, 0
+    li        a7, SBI_LEGACY_PUTCHAR_NUM
+    ecall
+    
+    # 恢复寄存器
+    ld        ra, 24(sp)
+    ld        a2, 16(sp)
+    ld        a1, 8(sp)
+    ld        a0, 0(sp)
+    addi      sp, sp, 32
+    
+    addi      t0, t0, 1
+    j         str_loop
+str_done:
+    ret
+
+# 打印16进制数函数
+# 参数: a2 = 要打印的值
+print_hex:
+    # 保存寄存器
+    addi      sp, sp, -64
+    sd        ra, 0(sp)
+    sd        a0, 8(sp)
+    sd        a1, 16(sp)
+    sd        a2, 24(sp)
+    sd        a7, 32(sp)
+    sd        t0, 40(sp)
+    sd        t1, 48(sp)
+    sd        t2, 56(sp)
+    
+    # 输出 "0x" 前缀
+    li        a0, '0'
+    li        a1, 0
+    li        a2, 0
+    li        a7, 0x01 # SBI_LEGACY_PUTCHAR_NUM
+    ecall
+    
+    li        a0, 'x'
+    li        a1, 0
+    li        a2, 0
+    li        a7, 0x01 # SBI_LEGACY_PUTCHAR_NUM
+    ecall
+    
+    # 恢复值
+    ld        a2, 24(sp)
+    
+    # 输出16个十六进制位
+    li        t0, 60           # 移位计数
+hex_loop:
+    srl       t1, a2, t0       # 右移获取当前4位
+    andi      t1, t1, 0xf      # 掩码，只保留低4位
+    
+    # 转换为ASCII字符
+    li        t2, 10
+    blt       t1, t2, digit    # 如果 < 10，直接转成数字
+    addi      t1, t1, 'a' - 10 # 否则转成a-f
+    j         print_digit
+digit:
+    addi      t1, t1, '0'      # 转成数字0-9
+    
+print_digit:
+    # 保存/恢复临时寄存器
+    sd        t0, 40(sp)
+    sd        t1, 48(sp)
+    sd        t2, 56(sp)
+    
+    # 输出字符
+    mv        a0, t1
+    li        a1, 0
+    li        a2, 0
+    li        a7, SBI_LEGACY_PUTCHAR_NUM
+    ecall
+    
+    # 恢复临时寄存器
+    ld        t0, 40(sp)
+    ld        t1, 48(sp)
+    ld        t2, 56(sp)
+    
+    addi      t0, t0, -4       # 移位计数减4
+    bltz      t0, hex_done     # 如果小于0，结束
+    j         hex_loop         # 否则继续循环
+    
+hex_done:
+    # 恢复所有寄存器
+    ld        t2, 56(sp)
+    ld        t1, 48(sp)
+    ld        t0, 40(sp)
+    ld        a7, 32(sp)
+    ld        a2, 24(sp)
+    ld        a1, 16(sp)
+    ld        a0, 8(sp)
+    ld        ra, 0(sp)
+    addi      sp, sp, 64
+    ret
+
+# ===== 字符串常量 =====
+.section .rodata
+error_header:
+    .asciz "\r\n\r\n***** KERNEL FATAL ERROR *****\r\nError Code: "
+addr_msg:
+    .asciz "\r\nFault Address: "
+sepc_msg:
+    .asciz "\r\nSEPC: "
+scause_msg:
+    .asciz "\r\nSCAUSE: "
+stval_msg:
+    .asciz "\r\nSTVAL: "
+sstatus_msg:
+    .asciz "\r\nSSTATUS: "
+fatal_end_msg:
+    .asciz "\r\n********************************\r\n"
+halt_msg:
+    .asciz "\r\nSystem halted. Reset required.\r\n"

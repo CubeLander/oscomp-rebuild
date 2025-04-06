@@ -57,7 +57,6 @@ SECTIONS
   /* 记录低地址区域结束位置 */
   _boot_end = .;
   /* 为页表预留物理空间 */
-  _g_pagetable_pa = .;
   _kernel_code_offset = .;
   
   /*--------------------------------------------------------------------*/
@@ -67,6 +66,7 @@ SECTIONS
   /* 切换到高地址区域 - 基于实际加载位置计算虚拟地址起始位置 */
   . = _HIGH_ADDR_BASE + _kernel_code_offset - _LOAD_ADDR_BASE;
   _g_pagetable_va = .;
+  _g_pagetable_pa = _g_pagetable_va - _HIGH_ADDR_BASE + _LOAD_ADDR_BASE;
   /* 为早期引导页表在虚拟空间预留位置 */
   . += 0x1000;  /* 预留一页 */
   
@@ -147,7 +147,7 @@ SECTIONS
 
   . = ALIGN(0x1000);
   _end = .;
-  
+  _end_phys = _end - _HIGH_ADDR_BASE + _LOAD_ADDR_BASE;
   /* 记录虚拟地址结束位置 */
   _kernel_virt_end = .;
   

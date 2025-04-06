@@ -279,14 +279,6 @@ paddr_t lookup_pa(pagetable_t pagetable, vaddr_t va) {
 	return PTE2PA(*pte) | offset;
 }
 
-void pagetable_activate(pagetable_t pagetable) {
-	// kprintf("pagetable_activate: start.\n");
-	// pagetable_dump(pagetable);
-	//  确保所有映射都已完成
-	write_csr(satp, MAKE_SATP(pagetable));
-	flush_tlb(); // 刷新TLB
-	kprintf("pagetable_activate: complete.\n");
-}
 
 pagetable_t pagetable_current(void) {
 	uint64 satp = read_csr(satp);

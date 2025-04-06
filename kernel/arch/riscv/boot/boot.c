@@ -12,6 +12,7 @@
 #include <kernel/types.h>
 #include <kernel/util.h>
 #include <kernel/vfs.h>
+#include <kernel/config.h>
 
 #define __boot_code __attribute__((section(".boot_text")))
 //#define __boot_code 
@@ -33,7 +34,7 @@ extern char _ftext[], _etext[], _fdata[], _end[];
  extern char _g_pagetable_va[], _g_pagetable_pa[];
 //__attribute__((aligned(PAGE_SIZE))) char _g_pagetable_pa[PAGE_SIZE];
 
-#define KERN_VA_TO_PA(x) ((uint64)(((uint64)x) - 0xff000000 + 0x80000000))
+#define KERN_VA_TO_PA(x) ((uint64)(((uint64)x) - KERN_BASE + 0x80000000))
 __boot_code void early_vm_init(void) {
 	// extern struct mm_struct init_mm;
 	//  映射内核代码段和只读段
@@ -43,38 +44,20 @@ __boot_code void early_vm_init(void) {
 	//  之后它会被加入内核的虚拟空间，先临时用一个页
 	early_memset(pagetable_phaddr, 0, PAGE_SIZE);
 	//kprintf("early_vm_init: pagetable_phaddr = %lx\n", pagetable_phaddr);
-	early_map_pages(pagetable_phaddr, 0x80000000, 0x80000000, ((uint64)_end - 0xff000000), early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
+	early_map_pages(pagetable_phaddr, 0x80000000, 0x80000000, ((uint64)_end - KERN_BASE), early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
 	//kprintf("early_vm_init: stage 1 done = %lx\n", pagetable_phaddr);
 
 	// //kprintf("_etext=%lx,_ftext=%lx\n", _etext, _ftext);
-	early_map_pages(pagetable_phaddr, 0xff000000, 0x80000000, ((uint64)_end - 0xff000000), early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
+	early_map_pages(pagetable_phaddr, KERN_BASE, 0x80000000, ((uint64)_end - KERN_BASE), early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
+	// 映射设备树
+	early_map_pages(pagetable_phaddr, 0xbf000000, 0xbf000000, ((uint64)_end - KERN_BASE), early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
 	//kprintf("early_vm_init: stage 2 done = %lx\n", pagetable_phaddr);
-
-	// // 映射内核页表
-	// early_map_pages(pagetable_phaddr,(uint64)_g_pagetable_va , (uint64)_g_pagetable_pa, PAGE_SIZE, early_prot_to_type(PROT_READ | PROT_WRITE, 0));
-	// // 映射内核代码段
-	// early_map_pages(pagetable_phaddr, (uint64)_ftext, KERN_VA_TO_PA(_ftext), (uint64)(_etext - _ftext), early_prot_to_type(PROT_READ | PROT_EXEC, 0));
-
-	// // 映射内核数据段和bss段
-	// early_map_pages(pagetable_phaddr, (uint64)_fdata, KERN_VA_TO_PA(_fdata), (uint64)(_end - _fdata), early_prot_to_type(PROT_READ | PROT_WRITE, 0));
-
-	// // satp不通过这层映射找pagetable_phaddr，但是为了维护它，也需要做一个映射
-	// early_map_pages(pagetable_phaddr, (uint64)pagetable_phaddr,
-	//               (uint64)pagetable_phaddr, PAGE_SIZE,
-	//               early_prot_to_type(PROT_READ | PROT_WRITE, 0));
-	// 映射内核栈
-	// early_map_pages(init_mm.pagetable, (uint64)init_mm.pagetable, )
-
-	// pagetable_dump(pagetable_phaddr);
-
-	// // 6. 映射MMIO区域（如果有需要）
-	// // 例如UART、PLIC等外设的内存映射IO区域
-	//pagetable_dump(pagetable_phaddr);
 
 }
 
 __boot_code void start_trap() { while (1); }
 __boot_data struct trapframe boot_trapframe;
+// 这个boot_trapframe应该给每个核都发一个
 // 这个boot_trapframe应该给每个核都发一个
 
 //

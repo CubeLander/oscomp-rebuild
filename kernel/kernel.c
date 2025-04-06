@@ -78,77 +78,74 @@ fail_fs:
 	return error;
 }
 
+__attribute__((aligned(PAGE_SIZE))) char emergency_stack_top[PAGE_SIZE];
+struct trapframe kern_trapframe;
+extern struct task_struct idle_task;
+void kernel_trap_setup(void) {
+	current_percpu[read_tp()] = &idle_task;
+	idle_task.trapframe = &kern_trapframe;
 
+	extern char smode_trap_vector[];
+	write_csr(sstatus, read_csr(sstatus) | SSTATUS_SIE);
+	write_csr(stvec, (uint64)smode_trap_vector);
+	write_csr(sscratch, (uint64)&kern_trapframe);
+	uint64 ksp = read_reg(sp);
+	kern_trapframe.kernel_sp = ROUNDUP(ksp, PAGE_SIZE);
+	kern_trapframe.kernel_schedule = (uint64)schedule;
+
+	return;
+}
+
+void complete_kvm(void) {
+	extern char _g_pagetable_va[];
+	extern char _end[], _end_phys[];
+	g_kernel_pagetable = (pagetable_t)_g_pagetable_va;
+	pgt_map_pages(g_kernel_pagetable, KERN_BASE, 0x80000000, PAGE_SIZE, PTE_R | PTE_W | PTE_X);
+
+
+}
 
 //
 // s_start: S-mode entry point of riscv-pke OS kernel.
 //
-volatile static int32 sig = 1;
 volatile static int counter = 0;
 
 void s_start(uintptr_t hartid, uintptr_t dtb) {
+	SBI_PUTCHAR('S');
+	SBI_PUTCHAR('_');
+	SBI_PUTCHAR('S');
+	SBI_PUTCHAR('T');
+	SBI_PUTCHAR('A');
+	SBI_PUTCHAR('R');
+	SBI_PUTCHAR('T');
+	SBI_PUTCHAR('\n');
 	write_tp(hartid);
+	kernel_trap_setup();
 	// 最重要！先把中断服务程序挂上去，不然崩溃都不知道怎么死的。
-
 	if (hartid == 0) {
 		// spike_file_init(); //TODO: 将文件系统迁移到 QEMU
 		// init_dtb(dtb);
+		SBI_PUTCHAR('V');
+		SBI_PUTCHAR('\n');
 		parseDtb(dtb);
-	}
-	if (NCPU > 1) sync_barrier(&counter, NCPU);
-	write_csr(sie, read_csr(sie) | SIE_SEIE | SIE_STIE); // 不启用核间中断（暂时） TODO
-
-	// init timing. added @lab1_3
-	// lab1_challenge1 为了调试便利，禁用了外部时钟中断：
-	// timerinit(hartid);
-
-	// switch to supervisor mode (S mode) and jump to s_start(), i.e., set pc to
-	// mepc
-	// asm volatile("mret");
-	// 在内核初始化早期添加
-	// kprintf("Current privilege level: %ld\n", (read_csr(mstatus) >> 11) & 3);
-	// kprintf("stvec: 0x%lx\n", read_csr(stvec));
-	// kprintf("medeleg: 0x%lx\n", read_csr(medeleg));
-	// kprintf("mideleg: 0x%lx\n", read_csr(mideleg));
-	// kprintf("sstatus: 0x%lx\n", read_csr(sstatus));
-	// kprintf("sie: 0x%lx\n", read_csr(sie));
-	// kprintf("In m_start, hartid:%d\n", hartid);
-
-	//write_csr(stvec, (uint64)start_trap);
-
-	extern void init_idle_task(void);
-
-	kprintf("Enter supervisor mode...\n");
-	write_csr(satp, 0);
-
-	if (hartid == 0) {
+		complete_kvm();
 		init_page_manager();
-		//pagetable_activate(g_kernel_pagetable);
-		//boot_trapframe.kernel_satp = MAKE_SATP(g_kernel_pagetable);
+		// pagetable_activate(g_kernel_pagetable);
+		// boot_trapframe.kernel_satp = MAKE_SATP(g_kernel_pagetable);
 		create_init_mm();
 		kmem_init();
 		init_scheduler();
-
+		extern void init_idle_task(void);
 		init_idle_task();
 		// kmalloc在形式上需要使用init_mm的“用户虚拟空间分配器”
 		// 所以我们在启用kmalloc之前，需要先初始化0号进程
 
 		// init_scheduler();
 		vfs_init();
-		sig = 0;
-	} else {
-		while (sig) {
-		}
-		pagetable_activate(g_kernel_pagetable);
 	}
-
-	// sync_barrier(&sync_counter, NCPU);
-
-	//  写入satp寄存器并刷新tlb缓存
-	//    从这里开始，所有内存访问都通过MMU进行虚实转换
-
+	if (NCPU > 1) sync_barrier(&counter, NCPU);
+	write_csr(sie, read_csr(sie) | SIE_SEIE | SIE_STIE); // 不启用核间中断（暂时） TODO
 	kprintf("Switch to user mode.....\n");
-
 
 	// the application code (elf) is first loaded into memory, and then put into
 	// execution added @lab3_1

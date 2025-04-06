@@ -52,7 +52,7 @@ _entry:
 		li t2, 0x80000000          # Physical base address
 		sub t1, t1, t2             # Calculate offset
 		add sp, sp, t1             # Adjust stack pointer
-		add s1, s1, t1						 # Adjust dtb
+		# add s1, s1, t1						 # Adjust dtb
 
     # 准备调用 s_start，恢复参数到 a0 和 a1
     mv a0, s0      # 将 hartid 放回 a0
