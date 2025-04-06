@@ -1,6 +1,7 @@
 ## 主线任务
 
 ### 目前正在着手的任务
+- [ ] 
 debug:0xff2209c2
 - [ ] 完善debugger
 - [ ] 为每个cpu准备一个idle task

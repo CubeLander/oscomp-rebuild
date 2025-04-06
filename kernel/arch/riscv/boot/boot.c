@@ -12,7 +12,6 @@
 #include <kernel/types.h>
 #include <kernel/util.h>
 #include <kernel/vfs.h>
-#include <kernel/config.h>
 
 #define __boot_code __attribute__((section(".boot_text")))
 //#define __boot_code 
@@ -34,7 +33,7 @@ extern char _ftext[], _etext[], _fdata[], _end[];
  extern char _g_pagetable_va[], _g_pagetable_pa[];
 //__attribute__((aligned(PAGE_SIZE))) char _g_pagetable_pa[PAGE_SIZE];
 
-#define KERN_VA_TO_PA(x) ((uint64)(((uint64)x) - KERN_BASE + 0x80000000))
+#define KERN_VA_TO_PA(x) ((uint64)(((uint64)x) - 0xff000000 + 0x80000000))
 __boot_code void early_vm_init(void) {
 	// extern struct mm_struct init_mm;
 	//  映射内核代码段和只读段
@@ -44,13 +43,11 @@ __boot_code void early_vm_init(void) {
 	//  之后它会被加入内核的虚拟空间，先临时用一个页
 	early_memset(pagetable_phaddr, 0, PAGE_SIZE);
 	//kprintf("early_vm_init: pagetable_phaddr = %lx\n", pagetable_phaddr);
-	early_map_pages(pagetable_phaddr, 0x80000000, 0x80000000, ((uint64)_end - KERN_BASE), early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
+	early_map_pages(pagetable_phaddr, 0x80000000, 0x80000000, ((uint64)_end - 0xff000000), early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
 	//kprintf("early_vm_init: stage 1 done = %lx\n", pagetable_phaddr);
 
 	// //kprintf("_etext=%lx,_ftext=%lx\n", _etext, _ftext);
-	early_map_pages(pagetable_phaddr, KERN_BASE, 0x80000000, ((uint64)_end - KERN_BASE), early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
-	// 映射设备树
-	early_map_pages(pagetable_phaddr, 0xbf000000, 0xbf000000, ((uint64)_end - KERN_BASE), early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
+	early_map_pages(pagetable_phaddr, 0xff000000, 0x80000000, ((uint64)_end - 0xff000000), early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
 	//kprintf("early_vm_init: stage 2 done = %lx\n", pagetable_phaddr);
 
 }
