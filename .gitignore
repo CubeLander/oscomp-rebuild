@@ -1,0 +1,13 @@
+*.o
+*.out
+*.swp
+tags
+cscope*
+*dump
+rename.py
+format.py
+obj/
+.VSCodeCounter/
+pke_out.txt
+logs/
+build/
