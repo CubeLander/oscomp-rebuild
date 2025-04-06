@@ -200,78 +200,78 @@ void kernel_trap_handler(struct trapframe *tf) {
 	  switch (cause) {
 		case CAUSE_MISALIGNED_FETCH:
 		  kprintf("内核异常: CAUSE_MISALIGNED_FETCH (取指未对齐)\n");
-		  kprintf("  epc = %p, stval = %p\n", epc, stval);
+		  kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
 		  panic("内核异常: 取指未对齐");
 		  break;
 		case CAUSE_FETCH_ACCESS:
 		  kprintf("内核异常: CAUSE_FETCH_ACCESS (取指访问错误)\n");
-		  kprintf("  epc = %p, stval = %p\n", epc, stval);
+		  kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
 		  panic("内核异常: 取指访问错误");
 		  break;
 		case CAUSE_ILLEGAL_INSTRUCTION:
 		  kprintf("内核异常: CAUSE_ILLEGAL_INSTRUCTION (非法指令)\n");
-		  kprintf("  epc = %p, stval = %p\n", epc, stval);
+		  kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
 		  panic("内核异常: 非法指令");
 		  break;
 		case CAUSE_BREAKPOINT:
 		  kprintf("内核异常: CAUSE_BREAKPOINT (断点)\n");
-		  kprintf("  epc = %p, stval = %p\n", epc, stval);
+		  kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
 		  // 可以选择不panic，而是处理断点
 		  break;
 		case CAUSE_MISALIGNED_LOAD:
 		  kprintf("内核异常: CAUSE_MISALIGNED_LOAD (加载未对齐)\n");
-		  kprintf("  epc = %p, stval = %p\n", epc, stval);
+		  kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
 		  panic("内核异常: 加载未对齐");
 		  break;
 		case CAUSE_LOAD_ACCESS:
 		  kprintf("内核异常: CAUSE_LOAD_ACCESS (加载访问错误)\n");
-		  kprintf("  epc = %p, stval = %p\n", epc, stval);
+		  kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
 		  panic("内核异常: 加载访问错误");
 		  break;
 		case CAUSE_MISALIGNED_STORE:
 		  kprintf("内核异常: CAUSE_MISALIGNED_STORE (存储未对齐)\n");
-		  kprintf("  epc = %p, stval = %p\n", epc, stval);
+		  kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
 		  panic("内核异常: 存储未对齐");
 		  break;
 		case CAUSE_STORE_ACCESS:
 		  kprintf("内核异常: CAUSE_STORE_ACCESS (存储访问错误)\n");
-		  kprintf("  epc = %p, stval = %p\n", epc, stval);
+		  kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
 		  panic("内核异常: 存储访问错误");
 		  break;
 		case CAUSE_USER_ECALL:
 		  kprintf("内核异常: CAUSE_USER_ECALL (用户态系统调用)\n");
-		  kprintf("  epc = %p, stval = %p\n", epc, stval);
+		  kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
 		  // 这通常不应该在内核模式下发生
 		  panic("内核异常: 不应该在内核模式收到用户态系统调用");
 		  break;
 		case CAUSE_SUPERVISOR_ECALL:
 		  kprintf("内核异常: CAUSE_SUPERVISOR_ECALL (内核态系统调用)\n");
-		  kprintf("  epc = %p, stval = %p\n", epc, stval);
+		  kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
 		  // 处理内核态系统调用
 		  break;
 		case CAUSE_MACHINE_ECALL:
 		  kprintf("内核异常: CAUSE_MACHINE_ECALL (机器态系统调用)\n");
-		  kprintf("  epc = %p, stval = %p\n", epc, stval);
+		  kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
 		  panic("内核异常: 机器态系统调用");
 		  break;
 		case CAUSE_FETCH_PAGE_FAULT:
 		  kprintf("内核异常: CAUSE_FETCH_PAGE_FAULT (取指页错误)\n");
-		  kprintf("  epc = %p, stval = %p\n", epc, stval);
+		  kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
 		  panic("内核异常: 取指页错误");
 		  break;
 		case CAUSE_LOAD_PAGE_FAULT:
 		  kprintf("内核异常: CAUSE_LOAD_PAGE_FAULT (加载页错误)\n");
-		  kprintf("  epc = %p, stval = %p\n", epc, stval);
+		  kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
 		  panic("内核异常: 加载页错误");
 		  break;
 		case CAUSE_STORE_PAGE_FAULT:
 		  kprintf("内核异常: CAUSE_STORE_PAGE_FAULT (存储页错误)\n");
-		  kprintf("  epc = %p, stval = %p\n", epc, stval);
+		  kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
 		  panic("内核异常: 存储页错误");
 		  break;
 		default:
 		  kprintf("内核异常: 未知类型 (代码: %p)\n", cause);
-		  kprintf("  epc = %p, stval = %p\n", epc, stval);
+		  kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
 		  panic("内核异常: 未知类型");
 		  break;
 	  }

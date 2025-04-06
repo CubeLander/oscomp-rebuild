@@ -49,6 +49,7 @@ __boot_code void early_vm_init(void) {
 	// //kprintf("_etext=%lx,_ftext=%lx\n", _etext, _ftext);
 	early_map_pages(pagetable_phaddr, 0xff000000, 0x80000000, ((uint64)_end - 0xff000000), early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
 	//kprintf("early_vm_init: stage 2 done = %lx\n", pagetable_phaddr);
+	early_map_pages(pagetable_phaddr, 0xbf000000, 0xbf000000, PAGE_SIZE, early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
 
 }
 
