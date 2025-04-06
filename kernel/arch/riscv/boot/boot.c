@@ -37,19 +37,19 @@ extern char _ftext[], _etext[], _fdata[], _end[];
 __boot_code void early_vm_init(void) {
 	// extern struct mm_struct init_mm;
 	//  映射内核代码段和只读段
-
+	g_kernel_pagetable = (pagetable_t)_g_pagetable_va;
 	pagetable_t pagetable_phaddr = (pagetable_t)_g_pagetable_pa;
 	// init_mm.pagetable = pagetable_phaddr;
 	//  之后它会被加入内核的虚拟空间，先临时用一个页
 	early_memset(pagetable_phaddr, 0, PAGE_SIZE);
 	//kprintf("early_vm_init: pagetable_phaddr = %lx\n", pagetable_phaddr);
-	early_map_pages(pagetable_phaddr, 0x80000000, 0x80000000, ((uint64)_end - 0xff000000), early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
+	early_map_pages(pagetable_phaddr, 0x80200000, 0x80200000, ((uint64)memInfo.size - 0x200000), early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
 	//kprintf("early_vm_init: stage 1 done = %lx\n", pagetable_phaddr);
 
 	// //kprintf("_etext=%lx,_ftext=%lx\n", _etext, _ftext);
-	early_map_pages(pagetable_phaddr, 0xff000000, 0x80000000, ((uint64)_end - 0xff000000), early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
+	//early_map_pages(pagetable_phaddr, 0xff000000, 0x80000000, ((uint64)_end - 0xff000000), early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
 	//kprintf("early_vm_init: stage 2 done = %lx\n", pagetable_phaddr);
-	early_map_pages(pagetable_phaddr, 0xbf000000, 0xbf000000, PAGE_SIZE, early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
+	//early_map_pages(pagetable_phaddr, 0xbf000000, 0xbf000000, PAGE_SIZE, early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
 
 }
 
@@ -75,7 +75,7 @@ __boot_code void early_boot(uintptr_t hartid, uintptr_t dtb) {
 
 	if (hartid == 0) {
 		// spike_file_init(); //TODO: 将文件系统迁移到 QEMU
-		// init_dtb(dtb);
+		parseDtb(dtb);
 		write_csr(satp, 0);
 		early_vm_init();
 	}

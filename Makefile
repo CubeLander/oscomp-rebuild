@@ -13,7 +13,7 @@ SCRIPT_DIR := $(PROJECT_ROOT)/script
 
 # MUSL 构建目标
 .PHONY: musl musl-clean build kernel busybox run gdb gdbc clean rebuild lwext4 example-with-musl cmake-build submodule
-.PHONY: debug-all debug-disasm debug-symbols debug-elfinfo debug-headers debug-sections debug-strings debug-reloc debug-dynamic debug-size
+.PHONY: debug-all asm debug-symbols debug-elfinfo debug-headers debug-sections debug-strings debug-reloc debug-dynamic debug-size
 .PHONY: fs-image fs-dirs fs-configs fs-install-busybox fs-install-user
 
 submodule:
@@ -115,7 +115,7 @@ debug-all:
 	cd $(BUILD_DIR) && make kernel_debug_info
 
 # 生成反汇编
-debug-disasm:
+asm:
 	@echo "生成反汇编..."
 	cd $(BUILD_DIR) && make kernel_disasm
 

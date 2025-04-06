@@ -64,16 +64,16 @@ SECTIONS
   /*--------------------------------------------------------------------*/
   . = ALIGN(0x1000);  /* 确保页对齐 */
   /* 切换到高地址区域 - 基于实际加载位置计算虚拟地址起始位置 */
-  . = _HIGH_ADDR_BASE + _kernel_code_offset - _LOAD_ADDR_BASE;
+  //. = _HIGH_ADDR_BASE + _kernel_code_offset - _LOAD_ADDR_BASE;
   _g_pagetable_va = .;
-  _g_pagetable_pa = _g_pagetable_va - _HIGH_ADDR_BASE + _LOAD_ADDR_BASE;
+  _g_pagetable_pa = _g_pagetable_va /*- _HIGH_ADDR_BASE + _LOAD_ADDR_BASE*/;
   /* 为早期引导页表在虚拟空间预留位置 */
   . += 0x1000;  /* 预留一页 */
   
   /* Code and read-only segment */
   . = ALIGN(0x1000);
   _ftext = .;
-  _text_phys = _ftext - _HIGH_ADDR_BASE + _LOAD_ADDR_BASE;
+  _text_phys = _ftext /*- _HIGH_ADDR_BASE + _LOAD_ADDR_BASE*/;
   /* text: Program code section */
   .text : AT(_text_phys) {
     . = ALIGN(4); /* 4 字节对齐 */
@@ -88,7 +88,7 @@ SECTIONS
   /*   ASSERT(. - _trap_sec_start == 0x1000, "error: trap section larger than one page");   */
   }
 	_frodata = .;
-  _rodata_phys = _frodata - _HIGH_ADDR_BASE + _LOAD_ADDR_BASE;
+  _rodata_phys = _frodata /*- _HIGH_ADDR_BASE + _LOAD_ADDR_BASE*/;
   /* rodata: Read-only data */
   .rodata : AT(_rodata_phys){
     *(.rdata)
@@ -110,7 +110,7 @@ SECTIONS
   . = ALIGN(16);
   _fdata = .;
 
-  _data_phys = _fdata - _HIGH_ADDR_BASE + _LOAD_ADDR_BASE;
+  _data_phys = _fdata /*- _HIGH_ADDR_BASE + _LOAD_ADDR_BASE*/;
   /* data: Writable data */
   .data :AT(_data_phys) {
     *(.data)
@@ -135,7 +135,7 @@ SECTIONS
   /* bss: Uninitialized writeable data section */
   . = .;
   _bss_start = .;
-  _bss_phys = _fbss - _HIGH_ADDR_BASE + _LOAD_ADDR_BASE;
+  _bss_phys = _fbss /*- _HIGH_ADDR_BASE + _LOAD_ADDR_BASE*/;
 
   .bss :AT(_bss_phys) {
     *(.bss)
@@ -147,7 +147,7 @@ SECTIONS
 
   . = ALIGN(0x1000);
   _end = .;
-  _end_phys = _end - _HIGH_ADDR_BASE + _LOAD_ADDR_BASE;
+  _end_phys = _end /*- _HIGH_ADDR_BASE + _LOAD_ADDR_BASE*/;
   /* 记录虚拟地址结束位置 */
   _kernel_virt_end = .;
   

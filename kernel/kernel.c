@@ -127,7 +127,7 @@ void s_start(uintptr_t hartid, uintptr_t dtb) {
 		// init_dtb(dtb);
 		SBI_PUTCHAR('V');
 		SBI_PUTCHAR('\n');
-		parseDtb(dtb);
+		//parseDtb(dtb);
 		complete_kvm();
 		init_page_manager();
 		// pagetable_activate(g_kernel_pagetable);
