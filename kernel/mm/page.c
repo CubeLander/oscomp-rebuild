@@ -3,14 +3,6 @@
 #include <kernel/mmu.h>
 #include <kernel/util.h>
 
-/**
- * 内核的高地址被定位在了0xff000000以上
- * 它是裸机模式下0x80000000的映射，偏差量是0xf7000000
- * 
- * 
- * 
- */
-
 // 页结构数组，用于跟踪所有物理页
 static struct page* page_pool = NULL;
 static uint64 total_pages = 0;
@@ -62,9 +54,9 @@ static void init_page_struct(struct page* page) {
 // 初始化页管理子系统
 void init_page_manager() {
 	// 内核程序段起止地址
-	extern char _end_phys[];
+	extern char _end[];
 
-	paddr_t kernel_end = (paddr_t)&_end_phys;
+	paddr_t kernel_end = (paddr_t)&_end;
 	uint64 pke_kernel_size = kernel_end - KERN_BASE;
 	kprintf("PKE kernel start 0x%lx, PKE kernel end: 0x%lx, PKE kernel size: "
 	        "0x%lx.\n",
@@ -84,8 +76,6 @@ void init_page_manager() {
 
 	// 保留空间给页结构数组
 	page_pool = (struct page*)free_mem_start_addr;
-
-
 
 	// 初始化所有页结构
 	for (uint64 i = 0; i < total_pages; i++) {

@@ -458,6 +458,17 @@ void pagetable_dump(pagetable_t pagetable) {
 	kprintf("=======================\n");
 }
 
+void pagetable_activate(pagetable_t pagetable) {
+	// kprintf("pagetable_activate: start.\n");
+	// pagetable_dump(pagetable);
+	//  确保所有映射都已完成
+	write_csr(satp, MAKE_SATP(pagetable));
+	flush_tlb(); // 刷新TLB
+	kprintf("pagetable_activate: complete.\n");
+}
+
+
+
 // 检查特定地址的映射
 void check_address_mapping(pagetable_t pagetable, uint64 va) {
 	uint64 vpn[3];
