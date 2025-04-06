@@ -13,70 +13,12 @@
 #include <kernel/util.h>
 #include <kernel/vfs.h>
 
-#define __boot_code __attribute__((section(".boot_text")));
-#define __boot_data __attribute__((section(".boot_data")));	
 
 
-// 分配 (NCPU + 1) 个保护页 + NCPU 个实际栈页
-__attribute__((aligned(PAGE_SIZE))) char stack0[PAGE_SIZE * (NCPU + 1 + NCPU)];
 
 __attribute__((aligned(PAGE_SIZE))) char emergency_stack_top[PAGE_SIZE];
 
-void setup_stack_guard_pages(void) {
-	pgt_map_pages(g_kernel_pagetable,(vaddr_t)0,(paddr_t)0, PAGE_SIZE, 0);
-	// 设置空指针保护页
-    // 计算保护页的起始地址
-    for (int i = 0; i <= NCPU; i++) {
-        void *guard_page = stack0 + (i * 2 - 1) * (PAGE_SIZE);
-        
-        // 标记为不可访问
-        pgt_map_pages(g_kernel_pagetable,(vaddr_t)guard_page,(paddr_t)guard_page, PAGE_SIZE, 0); // 无权限
-    }
-	kprintf("setup_stack_guard_pages: complete\n");
-    
-    // 刷新TLB
-    flush_tlb();
-}
 
-static void kernel_vm_init(void) {
-	kprintf("kernel_vm_init: start, membase = %lx, memsize=%lx\n",memInfo.start, memInfo.size);
-	// extern struct mm_struct init_mm;
-	//  映射内核代码段和只读段
-	g_kernel_pagetable = (pagetable_t)alloc_page()->paddr;
-	// init_mm.pagetable = g_kernel_pagetable;
-	//  之后它会被加入内核的虚拟空间，先临时用一个页
-	memset(g_kernel_pagetable, 0, PAGE_SIZE);
-
-	extern char _ftext[], _etext[], _fdata[], _end[];
-	// kprintf("_etext=%lx,_ftext=%lx\n", _etext, _ftext);
-
-	pgt_map_pages(g_kernel_pagetable, (uint64)_ftext, (uint64)_ftext, (uint64)(_etext - _ftext), prot_to_type(PROT_READ | PROT_EXEC, 0));
-
-	// 映射内核HTIF段
-	pgt_map_pages(g_kernel_pagetable, (uint64)_etext, (uint64)_etext, (uint64)(_fdata - _etext), prot_to_type(PROT_READ | PROT_WRITE, 0));
-
-	// 映射内核数据段
-	pgt_map_pages(g_kernel_pagetable, (uint64)_fdata, (uint64)_fdata, (uint64)(_end - _fdata), prot_to_type(PROT_READ | PROT_WRITE, 0));
-	// 映射内核数据段
-	pgt_map_pages(g_kernel_pagetable, (uint64)_fdata, (uint64)_fdata, (uint64)(_end - _fdata), prot_to_type(PROT_READ | PROT_WRITE, 0));
-
-	// 对于剩余的物理内存空间做直接映射
-	pgt_map_pages(g_kernel_pagetable, (uint64)_end, (uint64)_end, DRAM_BASE + memInfo.size - (uint64)_end, prot_to_type(PROT_READ | PROT_WRITE, 0));
-	// // satp不通过这层映射找g_kernel_pagetable，但是为了维护它，也需要做一个映射
-	// pgt_map_pages(g_kernel_pagetable, (uint64)g_kernel_pagetable,
-	//               (uint64)g_kernel_pagetable, PAGE_SIZE,
-	//               prot_to_type(PROT_READ | PROT_WRITE, 0));
-	setup_stack_guard_pages();
-	// 映射内核栈
-	// pgt_map_pages(init_mm.pagetable, (uint64)init_mm.pagetable, )
-
-	// pagetable_dump(g_kernel_pagetable);
-
-	// // 6. 映射MMIO区域（如果有需要）
-	// // 例如UART、PLIC等外设的内存映射IO区域
-
-	kprintf("kern_vm_init: complete\n");
-}
 
 /**
  * setup_init_fds - Set up standard file descriptors for init process
@@ -143,27 +85,6 @@ fail_fs:
 	return error;
 }
 
-void start_trap() { while (1); }
-
-struct task_struct boot_task;
-
-
-struct trapframe boot_trapframe;
-// 这个boot_trapframe应该给每个核都发一个
-void boot_trap_setup(void){
-	current_percpu[read_tp()] = &boot_task;
-	boot_task.trapframe = &boot_trapframe;
-
-	extern char smode_trap_vector[];
-	write_csr(sstatus, read_csr(sstatus) | SSTATUS_SIE);
-	write_csr(stvec, (uint64)smode_trap_vector);
-	write_csr(sscratch, (uint64)&boot_trapframe);
-	uint64 ksp = read_reg(sp);
-	boot_trapframe.kernel_sp = ROUNDUP(ksp, PAGE_SIZE);
-	boot_trapframe.kernel_schedule = (uint64)schedule;
-
-	return;
-}
 
 
 //
@@ -172,9 +93,8 @@ void boot_trap_setup(void){
 volatile static int32 sig = 1;
 volatile static int counter = 0;
 
-void early_boot(uintptr_t hartid, uintptr_t dtb) {
+void s_start(uintptr_t hartid, uintptr_t dtb) {
 	write_tp(hartid);
-	boot_trap_setup();
 	// 最重要！先把中断服务程序挂上去，不然崩溃都不知道怎么死的。
 
 	if (hartid == 0) {
@@ -210,9 +130,8 @@ void early_boot(uintptr_t hartid, uintptr_t dtb) {
 
 	if (hartid == 0) {
 		init_page_manager();
-		kernel_vm_init();
-		pagetable_activate(g_kernel_pagetable);
-		boot_trapframe.kernel_satp = MAKE_SATP(g_kernel_pagetable);
+		//pagetable_activate(g_kernel_pagetable);
+		//boot_trapframe.kernel_satp = MAKE_SATP(g_kernel_pagetable);
 		create_init_mm();
 		kmem_init();
 		init_scheduler();

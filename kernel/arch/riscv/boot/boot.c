@@ -20,6 +20,8 @@ __boot_code void early_sync_barrier(volatile int32* counter, int32 all);
 __boot_code void early_write_tp(uint64 x);
 __boot_code void* early_memset(void* dest, int byte, size_t len);
 __boot_code int32 eayly_map_pages(pagetable_t pagetable, uint64 va, uint64 pa, uint64 size, int32 perm);
+__boot_code int32 early_map_page(pagetable_t pagetable, vaddr_t va, paddr_t pa, int32 perm);
+__boot_code pte_t* early_page_walk(pagetable_t pagetable, uint64 va, int32 alloc);
 
 extern char _ftext[], _etext[], _fdata[], _end[], _boot_end[];
 
@@ -62,18 +64,18 @@ __boot_code static void kernel_vm_init(void) {
 	// // 例如UART、PLIC等外设的内存映射IO区域
 }
 
-void start_trap() { while (1); }
-struct trapframe boot_trapframe;
+__boot_code void start_trap() { while (1); }
+__boot_data struct trapframe boot_trapframe;
 // 这个boot_trapframe应该给每个核都发一个
 __boot_code void boot_trap_setup(void) { return; }
 
 //
 // s_start: S-mode entry point of riscv-pke OS kernel.
 //
-volatile static int32 sig = 1;
-volatile static int counter = 0;
+__boot_data volatile static int32 sig = 1;
+__boot_data volatile static int counter = 0;
 
-void early_boot(uintptr_t hartid, uintptr_t dtb) {
+__boot_code void early_boot(uintptr_t hartid, uintptr_t dtb) {
 	write_tp(hartid);
 	write_csr(sstatus, read_csr(sstatus) | SSTATUS_SIE);
 	write_csr(stvec, (uint64)start_trap);
