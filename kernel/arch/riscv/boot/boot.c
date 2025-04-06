@@ -14,70 +14,80 @@
 #include <kernel/vfs.h>
 
 #define __boot_code __attribute__((section(".boot_text")))
+//#define __boot_code 
 #define __boot_data __attribute__((section(".boot_data")))
+//#define __boot_data 
+
+__boot_data __attribute__((aligned(PAGE_SIZE))) char stack0[(NCPU * 2 + 1)  *  PAGE_SIZE];
 
 __boot_code void early_sync_barrier(volatile int32* counter, int32 all);
 __boot_code void early_write_tp(uint64 x);
 __boot_code void* early_memset(void* dest, int byte, size_t len);
-__boot_code int32 eayly_map_pages(pagetable_t pagetable, uint64 va, uint64 pa, uint64 size, int32 perm);
+__boot_code int32 early_map_pages(pagetable_t pagetable, uint64 va, uint64 pa, uint64 size, int32 perm);
 __boot_code int32 early_map_page(pagetable_t pagetable, vaddr_t va, paddr_t pa, int32 perm);
 __boot_code pte_t* early_page_walk(pagetable_t pagetable, uint64 va, int32 alloc);
+__boot_code uint64 early_prot_to_type(int32 prot, int32 user);
+__boot_code void* early_alloc_page(void);
 
-extern char _ftext[], _etext[], _fdata[], _end[], _boot_end[];
+extern char _ftext[], _etext[], _fdata[], _end[];
+ extern char _g_pagetable_va[], _g_pagetable_pa[];
+//__attribute__((aligned(PAGE_SIZE))) char _g_pagetable_pa[PAGE_SIZE];
 
-// 分配 (NCPU + 1) 个保护页 + NCPU 个实际栈页
-__boot_data __attribute__((aligned(PAGE_SIZE))) char stack0[PAGE_SIZE * (NCPU + 1 + NCPU)];
-
-__boot_code static void kernel_vm_init(void) {
+#define KERN_VA_TO_PA(x) ((uint64)(((uint64)x) - 0xff000000 + 0x80000000))
+__boot_code void early_vm_init(void) {
 	// extern struct mm_struct init_mm;
 	//  映射内核代码段和只读段
 
-	void* pagetable_phaddr = _boot_end;
+	pagetable_t pagetable_phaddr = (pagetable_t)_g_pagetable_pa;
 	// init_mm.pagetable = pagetable_phaddr;
 	//  之后它会被加入内核的虚拟空间，先临时用一个页
 	early_memset(pagetable_phaddr, 0, PAGE_SIZE);
+	//kprintf("early_vm_init: pagetable_phaddr = %lx\n", pagetable_phaddr);
+	early_map_pages(pagetable_phaddr, 0x80000000, 0x80000000, ((uint64)_end - 0xff000000), early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
+	//kprintf("early_vm_init: stage 1 done = %lx\n", pagetable_phaddr);
 
-	// kprintf("_etext=%lx,_ftext=%lx\n", _etext, _ftext);
+	// //kprintf("_etext=%lx,_ftext=%lx\n", _etext, _ftext);
+	early_map_pages(pagetable_phaddr, 0xff000000, 0x80000000, ((uint64)_end - 0xff000000), early_prot_to_type(PROT_READ | PROT_EXEC | PROT_WRITE, 0));
+	//kprintf("early_vm_init: stage 2 done = %lx\n", pagetable_phaddr);
 
-	eayly_map_pages(pagetable_phaddr, (uint64)_ftext, (uint64)_ftext, (uint64)(_etext - _ftext), prot_to_type(PROT_READ | PROT_EXEC, 0));
+	// // 映射内核页表
+	// early_map_pages(pagetable_phaddr,(uint64)_g_pagetable_va , (uint64)_g_pagetable_pa, PAGE_SIZE, early_prot_to_type(PROT_READ | PROT_WRITE, 0));
+	// // 映射内核代码段
+	// early_map_pages(pagetable_phaddr, (uint64)_ftext, KERN_VA_TO_PA(_ftext), (uint64)(_etext - _ftext), early_prot_to_type(PROT_READ | PROT_EXEC, 0));
 
-	// 映射内核HTIF段
-	eayly_map_pages(pagetable_phaddr, (uint64)_etext, (uint64)_etext, (uint64)(_fdata - _etext), prot_to_type(PROT_READ | PROT_WRITE, 0));
+	// // 映射内核数据段和bss段
+	// early_map_pages(pagetable_phaddr, (uint64)_fdata, KERN_VA_TO_PA(_fdata), (uint64)(_end - _fdata), early_prot_to_type(PROT_READ | PROT_WRITE, 0));
 
-	// 映射内核数据段
-	eayly_map_pages(pagetable_phaddr, (uint64)_fdata, (uint64)_fdata, (uint64)(_end - _fdata), prot_to_type(PROT_READ | PROT_WRITE, 0));
-	// 映射内核数据段
-	eayly_map_pages(pagetable_phaddr, (uint64)_fdata, (uint64)_fdata, (uint64)(_end - _fdata), prot_to_type(PROT_READ | PROT_WRITE, 0));
-
-	// 对于剩余的物理内存空间做直接映射
-	eayly_map_pages(pagetable_phaddr, (uint64)_end, (uint64)_end, DRAM_BASE + memInfo.size - (uint64)_end, prot_to_type(PROT_READ | PROT_WRITE, 0));
 	// // satp不通过这层映射找pagetable_phaddr，但是为了维护它，也需要做一个映射
-	// eayly_map_pages(pagetable_phaddr, (uint64)pagetable_phaddr,
+	// early_map_pages(pagetable_phaddr, (uint64)pagetable_phaddr,
 	//               (uint64)pagetable_phaddr, PAGE_SIZE,
-	//               prot_to_type(PROT_READ | PROT_WRITE, 0));
+	//               early_prot_to_type(PROT_READ | PROT_WRITE, 0));
 	// 映射内核栈
-	// eayly_map_pages(init_mm.pagetable, (uint64)init_mm.pagetable, )
+	// early_map_pages(init_mm.pagetable, (uint64)init_mm.pagetable, )
 
 	// pagetable_dump(pagetable_phaddr);
 
 	// // 6. 映射MMIO区域（如果有需要）
 	// // 例如UART、PLIC等外设的内存映射IO区域
+	//pagetable_dump(pagetable_phaddr);
+
 }
 
 __boot_code void start_trap() { while (1); }
 __boot_data struct trapframe boot_trapframe;
 // 这个boot_trapframe应该给每个核都发一个
-__boot_code void boot_trap_setup(void) { return; }
 
 //
 // s_start: S-mode entry point of riscv-pke OS kernel.
 //
-__boot_data volatile static int32 sig = 1;
-__boot_data volatile static int counter = 0;
+__boot_data volatile int32 sig = 1;
+__boot_data volatile int counter = 0;
 
 __boot_code void early_boot(uintptr_t hartid, uintptr_t dtb) {
 	write_tp(hartid);
-	write_csr(sstatus, read_csr(sstatus) | SSTATUS_SIE);
+	//kprintf("In early_boot, hartid:%d\n", hartid);
+	SBI_PUTCHAR('0' + hartid);
+	//write_csr(sstatus, read_csr(sstatus) | SSTATUS_SIE);
 	write_csr(stvec, (uint64)start_trap);
 	write_csr(sscratch, (uint64)&boot_trapframe);
 	// 最重要！先把中断服务程序挂上去，不然崩溃都不知道怎么死的。
@@ -86,7 +96,7 @@ __boot_code void early_boot(uintptr_t hartid, uintptr_t dtb) {
 		// spike_file_init(); //TODO: 将文件系统迁移到 QEMU
 		// init_dtb(dtb);
 		write_csr(satp, 0);
-		kernel_vm_init();
+		early_vm_init();
 	}
 	if (NCPU > 1) early_sync_barrier(&counter, NCPU);
 	write_csr(sie, read_csr(sie) | SIE_SEIE | SIE_STIE); // 不启用核间中断（暂时） TODO
@@ -124,22 +134,20 @@ __boot_code void* early_memset(void* dest, int byte, size_t len) {
 	return dest;
 }
 
-
-__boot_code int32 eayly_map_pages(pagetable_t pagetable, uint64 va, uint64 pa, uint64 size, int32 perm) {
+__boot_code int32 early_map_pages(pagetable_t pagetable, uint64 va, uint64 pa, uint64 size, int32 perm) {
 	// size可以不对齐
 	size = ROUNDUP(size, PAGE_SIZE);
-	// kprintf("eayly_map_pages: start\n");
+	// //kprintf("early_map_pages: start\n");
 	for (uint64 off = 0; off < size; off += PAGE_SIZE) {
 		early_map_page(pagetable, va + off, pa + off, perm);
 	}
-	// kprintf("eayly_map_pages: complete\n");
+	// //kprintf("early_map_pages: complete\n");
 
 	return 0;
 }
 
-
-
 __boot_code int32 early_map_page(pagetable_t pagetable, vaddr_t va, paddr_t pa, int32 perm) {
+	//kprintf("early_map_page: va=%lx pa=%lx perm=%lx\n", va, pa, perm);
 	if (pagetable == NULL) {
 		return -1;
 	}
@@ -169,14 +177,12 @@ __boot_code int32 early_map_page(pagetable_t pagetable, vaddr_t va, paddr_t pa, 
 		}
 	} else {
 		// 创建新映射
-		//kprintf("create page=%lx perm: %lx\n", aligned_pa, perm);
+		// //kprintf("create page=%lx perm: %lx\n", aligned_pa, perm);
 		*pte = PA2PPN(aligned_pa) | perm | PTE_V;
 	}
 
 	return 0;
 }
-
-
 
 /**
  * 在页表中查找页表项
@@ -188,7 +194,6 @@ __boot_code pte_t* early_page_walk(pagetable_t pagetable, uint64 va, int32 alloc
 
 	// 检查虚拟地址是否有效
 	if (va >= MAXVA) {
-
 		return NULL;
 	}
 
@@ -204,8 +209,8 @@ __boot_code pte_t* early_page_walk(pagetable_t pagetable, uint64 va, int32 alloc
 			pt = (pagetable_t)PTE2PA(*pte);
 		} else {
 
-			if (alloc && ((pt = (pte_t*)alloc_page()->paddr) != 0)) {
-				memset(pt, 0, PAGE_SIZE);
+			if (alloc && ((pt = (pte_t*)early_alloc_page()) != 0)) {
+				early_memset(pt, 0, PAGE_SIZE);
 				// writes the physical address of newly allocated page to pte, to
 				// establish the page table tree.
 
@@ -219,4 +224,34 @@ __boot_code pte_t* early_page_walk(pagetable_t pagetable, uint64 va, int32 alloc
 
 	// return a PTE which contains phisical address of a page
 	return pt + PX(0, va);
+}
+
+/**
+ * 将保护标志(PROT_*)转换为页表项标志
+ */
+__boot_code uint64 early_prot_to_type(int32 prot, int32 user) {
+	uint64 perm = 0;
+	if (prot & PROT_READ) perm |= PTE_R | PTE_A;
+	if (prot & PROT_WRITE) perm |= PTE_W | PTE_D;
+	if (prot & PROT_EXEC) perm |= PTE_X | PTE_A;
+	if (perm == 0) perm = PTE_R;
+	if (user) perm |= PTE_U;
+	return perm;
+}
+
+
+
+
+extern char _early_boot_page_pool[]; // 物理页池的起始地址
+extern char _early_boot_page_pool_end[]; // 物理页池的结束地址
+__boot_data void* early_page_pool = _early_boot_page_pool;
+//void* early_page_pool = (void*)0x80240000;
+__boot_code void* early_alloc_page(void) {
+	void* ret = early_page_pool;
+	early_page_pool += PAGE_SIZE;
+	if ((uintptr_t)early_page_pool >= (uintptr_t)_early_boot_page_pool_end) {
+		// 物理页池用完了
+		return NULL;
+	}
+	return ret;
 }

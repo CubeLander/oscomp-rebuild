@@ -33,6 +33,7 @@
 - [x] 在superblock中处理ino = 0的acquire请求
 - [ ] 补充kernel/console
 - [ ] 重写进程信号量和进程信号函数
+- [ ] 取消进出user时的satp切换
 
 
 

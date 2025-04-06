@@ -13,13 +13,6 @@
 #include <kernel/util.h>
 #include <kernel/vfs.h>
 
-
-
-
-__attribute__((aligned(PAGE_SIZE))) char emergency_stack_top[PAGE_SIZE];
-
-
-
 /**
  * setup_init_fds - Set up standard file descriptors for init process
  * @init_task: Pointer to the init task structure

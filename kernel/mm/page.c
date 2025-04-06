@@ -3,6 +3,14 @@
 #include <kernel/mmu.h>
 #include <kernel/util.h>
 
+/**
+ * 内核的高地址被定位在了0xff000000以上
+ * 它是裸机模式下0x80000000的映射，偏差量是0xf7000000
+ * 
+ * 
+ * 
+ */
+
 // 页结构数组，用于跟踪所有物理页
 static struct page* page_pool = NULL;
 static uint64 total_pages = 0;

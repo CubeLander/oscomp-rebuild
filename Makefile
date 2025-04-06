@@ -37,7 +37,7 @@ run:
 	qemu-system-riscv64 \
   -machine virt \
   -nographic \
-  -m 64M \
+  -m 2G \
   -bios default \
   -kernel build/bin/riscv-pke 
 #  >> /logs.txt
@@ -46,7 +46,7 @@ run:
 gdb:
 	qemu-system-riscv64 \
   -machine virt \
-  -m 64M \
+  -m 2G \
   -nographic \
   -bios default \
   -kernel build/bin/riscv-pke \

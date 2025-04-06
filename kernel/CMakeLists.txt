@@ -51,12 +51,30 @@ set_target_properties(c PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/lib/lib
 target_link_libraries(riscv-pke PRIVATE lwext4 c)
 
 set(DEBUG_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/debug)
-# 生成 objdump 和 ELF 解析文件
+# 生成详细的调试信息
 add_custom_command(
     TARGET riscv-pke
     POST_BUILD
     COMMAND mkdir -p ${DEBUG_OUTPUT_DIRECTORY}
-    COMMAND riscv64-unknown-elf-objdump -d ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.dump
+    # 详细反汇编，包含源代码
+    COMMAND riscv64-unknown-elf-objdump -D -S ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.dump
+    # 完整的ELF分析
     COMMAND riscv64-unknown-elf-readelf -a ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.elfinfo
-    COMMENT "Generating objdump and ELF analysis for riscv-pke in ${DEBUG_OUTPUT_DIRECTORY}"
+    # 符号表信息
+    COMMAND riscv64-unknown-elf-nm -n -S ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.symbols
+    # 仅全局符号
+    COMMAND riscv64-unknown-elf-nm -g ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.global-symbols
+    # 链接映射信息
+    COMMAND riscv64-unknown-elf-objdump --all-headers ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.headers
+    # 段信息
+    COMMAND riscv64-unknown-elf-objdump -h ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.sections
+    # 字符串信息
+    COMMAND riscv64-unknown-elf-strings ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.strings
+    # 尝试反汇编带有重定位信息
+    COMMAND riscv64-unknown-elf-objdump -r -d ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.reloc
+    # 查看动态符号和依赖关系
+    COMMAND riscv64-unknown-elf-readelf -d ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.dynamic
+    # 生成链接图
+    COMMAND riscv64-unknown-elf-size ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/riscv-pke > ${DEBUG_OUTPUT_DIRECTORY}/riscv-pke.size
+    COMMENT "Generating comprehensive debug information for riscv-pke in ${DEBUG_OUTPUT_DIRECTORY}"
 )
