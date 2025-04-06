@@ -13,7 +13,12 @@ SCRIPT_DIR := $(PROJECT_ROOT)/script
 
 
 # MUSL 构建目标
-.PHONY: musl musl-clean build kernel busybox run gdb gdb-client clean rebuild lwext4 example-with-musl cmake-build
+.PHONY: musl musl-clean build kernel busybox run gdb gdb-client clean rebuild lwext4 example-with-musl cmake-build submodule
+
+submodule:
+	@echo "更新子模块..."
+	git submodule init
+	git submodule update --recursive
 
 # CMake构建
 cmake-build:
