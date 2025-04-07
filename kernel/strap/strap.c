@@ -9,7 +9,7 @@
 #include <kernel/util.h>
 #include <kernel/syscall/syscall.h>
 #include <kernel/time.h>
-
+#include "plic.h"
 //
 // handling the syscalls. will call do_syscall() defined in kernel/syscall.c
 //
@@ -67,7 +67,7 @@ void handle_user_page_fault(uint64 mcause, uint64 sepc, uint64 stval) {
 			if (vma) {
 					// 确认访问权限
 					if ((fault_prot & vma->vm_prot) != fault_prot) {
-							kprintf("权限不足: 需要 %d, VMA允许 %d\n", fault_prot, vma->vm_prot);
+							kprintf("权限不足: 需要 %lx, VMA允许 %lx\n", fault_prot, vma->vm_prot);
 							goto error;
 					}
 					
@@ -189,6 +189,7 @@ void kernel_trap_handler(struct trapframe *tf) {
 		  break;
 		case IRQ_S_EXT:
 		  kprintf("内核中断: IRQ_S_EXT (S模式外部中断)\n");
+			external_trap_handler();
 		  // 处理外部中断
 		  break;
 		default:

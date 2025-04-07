@@ -1,9 +1,13 @@
 #include <kernel/boot/dtb.h>
 // #include <kernel/util/log.h>
 // #include "lib/kprintf.h"
+#include <string.h>
+
 #include <kernel/mmu.h>
 #include <kernel/types.h>
 #include <kernel/util.h>
+#include <kernel/device/virtio.h>
+#include <kernel/device/block_device.h>
 // #include "lib/string.h"
 // #include "mm/memlayout.h"
 #include <kernel/param.h>
@@ -98,8 +102,12 @@ static void* parseFdtNode(struct FDTHeader* fdtHeader, void* node, char* parent)
 	node += 4;
 
 	node_name = (char*)node;
-	// log(LEVEL_MODULE, "node's name:    %s\n", node_name);
-	// log(LEVEL_MODULE, "node's parent:  %s\n", parent);
+	kprintf("node's name:    %s\n", node_name);
+	kprintf("node's parent:  %s\n", parent);
+
+	// 检查节点名称是否与虚拟块设备相关(可能需要调整匹配字符串)
+	bool is_virtio_blk = (strstr(node_name, "virtio") != NULL && (strstr(node_name, "blk") != NULL || strstr(node_name, "disk") != NULL));
+
 	node += (strlen((char*)node) + 1);
 	node = (void*)FOURROUNDUP((uint64_t)node); // roundup to multiple of 4
 
@@ -119,7 +127,20 @@ static void* parseFdtNode(struct FDTHeader* fdtHeader, void* node, char* parent)
 				uint32_t nameoff = readBigEndian32(node);
 				node += 4;
 				char* name = (char*)(node + fdtHeader->off_dt_strings + nameoff);
+				// 如果这是virtio-blk节点，检查与大小/容量相关的属性
+				if (is_virtio_blk) {
+					if (strcmp(name, "reg") == 0 || strcmp(name, "reg-size") == 0 || strcmp(name, "size") == 0 || strcmp(name, "capacity") == 0) {
 
+						// 大小信息可能存储为64位值
+						if (len == 8) {
+							uint64_t ext4_image_size = readBigEndian64(node);
+							kprintf("发现ext4镜像大小: %llu 字节\n", ext4_image_size);
+							extern struct block_device virtio_disk;
+							// 也可以将大小信息保存到virtio_disk结构体中
+							virtio_disk.bd_nr_blocks = ext4_image_size / VIRTIO_SECTOR_SIZE;
+						}
+					}
+				}
 				if (name[0] != '\0') {
 					// log(LEVEL_MODULE, "name:   %s\n", name);
 				}

@@ -1,6 +1,7 @@
 #include <kernel/device/block_device.h>
-#include <kernel/fs/lwext4/ext4_blockdev.h>
+#include <lwext4/ext4_blockdev.h>
 #include <kernel/mm/kmalloc.h>
+#include <kernel/device/buffer_head.h>
 #include <kernel/types.h>
 #include <kernel/util/string.h>
 #include <kernel/vfs.h>
@@ -131,8 +132,9 @@ static int32 ext4_blockdev_adapter_bwrite(struct ext4_blockdev* e_blockdevice, c
 	struct block_device* kernel_bdev = __ext4_get_kernel_bdev(e_blockdevice);
 	if (!kernel_bdev) return -EINVAL;
 
+
 	/* Use kernel's block device write function */
-	if (kernel_bdev->bd_ops && kernel_bdev->bd_ops->write_blocks) { return kernel_bdev->bd_ops->write_blocks(kernel_bdev,(void*)buf, blk_id, blk_cnt ); }
+	if (kernel_bdev->bd_ops && kernel_bdev->bd_ops->write_block) { return kernel_bdev->bd_ops->write_block(kernel_bdev,(void*)buf, blk_id, blk_cnt ); }
 
 	return -ENOSYS;
 }

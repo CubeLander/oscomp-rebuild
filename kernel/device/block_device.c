@@ -158,3 +158,9 @@ void blockdevice_close(struct block_device *bdev) {
     
     spinlock_unlock(&bdev->bd_lock);
 }
+
+
+int32 blockdevice_register_all(void){
+	// 目前只是走个过场
+	return 0;
+}

@@ -1,10 +1,9 @@
 #include <kernel/fs/ext4_adaptor.h>
-#include <kernel/fs/vfs/superblock.h>
 #include <kernel/vfs.h>
-#include <kernel/mm/kmalloc.h>
-
+#include <kernel/mmu.h>
+#include <kernel/device/buffer_head.h>
 #include <kernel/types.h>
-#include <kernel/util/string.h>
+#include <kernel/util.h>
 
 /* Forward declarations */
 static int32 ext4_read_inode(struct inode* inode);
@@ -124,7 +123,9 @@ static int32 ext4_statfs(struct superblock* sb, struct statfs* stats) {
 	make_fsid_from_uuid(e_sb->uuid, &stats->f_fsid);
 	stats->f_namelen = EXT4_DIRECTORY_FILENAME_LEN;
 	stats->f_frsize = ext4_sb_get_block_size(e_sb);
+
 	stats->f_flags = ST_NOSUID | ST_NODEV | ST_NOEXEC;
+
 	ext4_unlock();
 
 	return 0;
@@ -213,10 +214,3 @@ int32 ext4_fill_super(struct superblock* sb, void* data, int32 silent) {
 // 	return sb;
 // }
 
-/* Filesystem type registration structure */
-struct fstype ext4_fs_type = {
-    .fs_name = "ext4",
-    .fs_flags = FS_REQUIRES_DEV,
-    //.fs_mount = ext4_mount_adapter,
-    //.fs_kill_sb = kill_block_super,
-};

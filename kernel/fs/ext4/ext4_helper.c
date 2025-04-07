@@ -1,12 +1,12 @@
 #include <kernel/fs/ext4_adaptor.h>
 #include <kernel/vfs.h>
 
-#include <kernel/fs/lwext4/ext4.h>
-#include <kernel/fs/lwext4/ext4_inode.h>
-#include <kernel/fs/lwext4/ext4_xattr.h>
-#include <kernel/fs/lwext4/ext4_super.h>
-#include <kernel/fs/lwext4/ext4_fs.h>
-#include <kernel/fs/lwext4/ext4_dir.h>
+#include <lwext4/ext4.h>
+#include <lwext4/ext4_inode.h>
+#include <lwext4/ext4_xattr.h>
+#include <lwext4/ext4_super.h>
+#include <lwext4/ext4_fs.h>
+#include <lwext4/ext4_dir.h>
 
 #include <kernel/util/spinlock.h>
 

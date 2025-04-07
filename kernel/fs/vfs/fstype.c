@@ -72,6 +72,7 @@ int32 fstype_register_all(void) {
 	INIT_LIST_HEAD(&file_systems_list);
 	spinlock_init(&file_systems_lock);
 	int32 err;
+	extern struct fstype ext4_fstype;
 	/* Register ramfs - our initial root filesystem */
 	// extern struct fstype ramfs_fstype;
 	// err = fstype_register(&ramfs_fstype);

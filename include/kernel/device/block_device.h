@@ -2,6 +2,7 @@
 #define _BLOCK_DEVICE_H
 
 #include <kernel/fs/vfs/inode.h>
+#include <kernel/device/buffer_head.h>
 #include <kernel/types.h>
 #include <kernel/util/list.h>
 #include <kernel/util/spinlock.h>
@@ -23,7 +24,7 @@ struct block_device {
 
 	spinlock_t bd_lock; // 设备访问锁
 
-	struct block_operations* bd_ops; // 块设备操作函数
+	const struct block_operations* bd_ops; // 块设备操作函数
 
 	/* 以下成员可以稍后实现 */
 	/*
@@ -43,8 +44,8 @@ struct block_device {
 /* Block device operations - 最小子集 */
 struct block_operations {
 	/* 必要的块I/O操作 */
-	int32 (*read_blocks)(struct block_device* bdev, void* buffer, sector_t sector, size_t count);
-	int32 (*write_blocks)(struct block_device* bdev, const void* buffer, sector_t sector, size_t count);
+	int32 (*read_block)(struct block_device* bdev, struct buffer_head* buffer);
+	int32 (*write_block)(struct block_device* bdev, struct buffer_head* buffer);
 
 	/* 设备生命周期管理 */
 	int32 (*open)(struct block_device* bdev, fmode_t mode);
@@ -83,6 +84,8 @@ void blockdevice_close(struct block_device* bdev);
 int32 sync_dirty_buffers(struct block_device* bdev);
 
 /* Block layer initialization */
+int32 blockdevice_register_all(void);
+
 void block_dev_init(void);
 
 #endif /* _BLOCK_DEVICE_H */

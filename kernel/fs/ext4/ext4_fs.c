@@ -22,26 +22,21 @@ int32 ext4_fs_sync(struct ext4_fs *fs)
     return ext4_block_cache_flush(fs->bdev);
 }
 
+// 目前只支持挂载给定的virtio_disk
+struct superblock* EXT4_mount(struct fstype* type, int32 flags, dev_t dev_id,const void* fs_data){
+	kprintf("EXT4_mount: Mounting ext4 filesystem\n");
+	struct buffer_head* buffer = bread()
 
-// /**
-//  * ext4_fs_flush_journal - Flush journal to disk
-//  * @fs: The ext4 filesystem
-//  *
-//  * Commits any pending transactions in the journal and
-//  * ensures they are written to disk.
-//  *
-//  * Returns: 0 on success, negative error code on failure
-//  */
-// int32 ext4_fs_flush_journal(struct ext4_fs *fs)
-// {
-//     if (!fs || !fs->bdev || !fs->bdev->journal)
-//         return -EINVAL;
-    
-//     /* Commit any pending journal transactions */
-//     int32 ret = ext4_journal_flush(fs->bdev->journal);
-//     if (ret != 0)
-//         return ret;
-    
-//     /* Flush all buffers to ensure journal is written to disk */
-//     return ext4_block_cache_flush(fs->bdev);
-// }
+
+
+}
+
+
+
+/* Filesystem type registration structure */
+struct fstype EXT4_fstype = {
+    .fs_name = "ext4",
+    .fs_flags = FS_REQUIRES_DEV,
+    .fs_mount = EXT4_mount,
+    //.fs_kill_sb = kill_block_super,
+};

@@ -19,7 +19,8 @@ function(add_debug_info TARGET_NAME)
     add_custom_target(
         ${TARGET_NAME}_disasm
         DEPENDS ${TARGET_NAME} create_debug_dir
-        COMMAND riscv64-unknown-elf-objdump -D -S 
+        # COMMAND riscv64-unknown-elf-objdump -D -S 
+				COMMAND riscv64-unknown-elf-objdump -d -S --source --no-show-raw-insn
                 "${TARGET_PATH}" > 
                 ${DEBUG_OUTPUT_DIRECTORY}/${TARGET_NAME}.dump
         COMMENT "Generating disassembly with source for ${TARGET_NAME}"

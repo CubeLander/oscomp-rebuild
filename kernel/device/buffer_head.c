@@ -149,7 +149,7 @@ struct buffer_head* bread(struct block_device* bdev, sector_t block, size_t size
 	if (!buffer_uptodate(bh)) {
 		lock_buffer(bh);
 		if (!buffer_uptodate(bh)) { // 双重检查，避免竞争条件
-			if (bdev->bd_ops->read_blocks(bdev, bh->b_data, block, 1) != 0) {
+			if (bdev->bd_ops->read_block(bdev, bh) != 0) {
 				unlock_buffer(bh);
 				brelse(bh);
 				return NULL;
@@ -191,7 +191,7 @@ int32 sync_dirty_buffer(struct buffer_head* bh) {
 
 	lock_buffer(bh);
 	if (buffer_dirty(bh)) {
-		ret = bh->b_bdev->bd_ops->write_blocks(bh->b_bdev, bh->b_data, bh->b_blocknr, 1);
+		ret = bh->b_bdev->bd_ops->write_block(bh->b_bdev, bh);
 		if (ret == 0) clear_buffer_dirty(bh);
 	}
 	unlock_buffer(bh);
@@ -211,14 +211,14 @@ void ll_rw_block(int32 rw, int32 nr, struct buffer_head* bhs[]) {
 		if (rw == READ) {
 			if (!buffer_uptodate(bh)) {
 				lock_buffer(bh);
-				bh->b_bdev->bd_ops->read_blocks(bh->b_bdev,bh->b_data, bh->b_blocknr,  1);
+				bh->b_bdev->bd_ops->read_block(bh->b_bdev,bh);
 				set_buffer_uptodate(bh);
 				unlock_buffer(bh);
 			}
 		} else {
 			if (buffer_dirty(bh)) {
 				lock_buffer(bh);
-				bh->b_bdev->bd_ops->write_blocks(bh->b_bdev,bh->b_data, bh->b_blocknr,  1);
+				bh->b_bdev->bd_ops->write_block(bh->b_bdev,bh);
 				clear_buffer_dirty(bh);
 				unlock_buffer(bh);
 			}
