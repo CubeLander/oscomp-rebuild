@@ -1,0 +1,24 @@
+{
+	"configurations": [
+			{
+					"name": "riscv-pke",
+					"includePath": [
+							"${workspaceFolder}/include",
+							"${workspaceFolder}/vendor/musl/include",
+							"${workspaceFolder}/vendor/musl/arch/generic",
+
+							"${workspaceFolder}/vendor/musl/arch/riscv64",
+							"${workspaceFolder}/vendor/musl/obj/include"
+					],
+					"defines": [
+							"__riscv",
+							"__riscv64"
+					],
+					"compilerPath": "/usr/bin/riscv64-unknown-elf-gcc",
+					"cStandard": "gnu11",
+					"cppStandard": "gnu++17",
+					"intelliSenseMode": "gcc-x64"
+			}
+	],
+	"version": 4
+}
