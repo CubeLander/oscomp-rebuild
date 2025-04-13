@@ -13,8 +13,9 @@ SCRIPT_DIR := $(PROJECT_ROOT)/script
 
 # MUSL 构建目标
 .PHONY: musl musl-clean build kernel busybox run gdb gdbc clean rebuild lwext4 example-with-musl cmake-build submodule
-.PHONY: debug-all debug-disasm debug-symbols debug-elfinfo debug-headers debug-sections debug-strings debug-reloc debug-dynamic debug-size
+.PHONY: debug debug-disasm debug-symbols debug-elfinfo debug-headers debug-sections debug-strings debug-reloc debug-dynamic debug-size
 .PHONY: fs-image fs-dirs fs-configs fs-install-busybox fs-install-user
+.PHONY: mount umount
 
 submodule:
 	@echo "更新子模块..."
@@ -110,7 +111,7 @@ example-with-musl: $(MUSL_LIB)
 # ============ 新增目标 - 调试信息 ============
 
 # 生成所有调试信息
-debug-all:
+debug:
 	@echo "生成所有调试信息..."
 	cd $(BUILD_DIR) && make kernel_debug_info
 
@@ -187,12 +188,12 @@ fs-install-user:
 	cd $(BUILD_DIR) && make install_user_programs_fs
 
 # 挂载文件系统镜像（仅用于调试）
-fs-mount:
+mount:
 	@echo "挂载文件系统镜像..."
-	sudo mkdir -p /mnt/rootfs
-	sudo mount -o loop $(BUILD_DIR)/disk_img/rootfs.img /mnt/rootfs
+	sudo mkdir -p ./build/rootfs-test
+	sudo mount -o loop $(BUILD_DIR)/disk_img/rootfs.img ./build/rootfs-test
 
 # 卸载文件系统镜像
-fs-unmount:
+umount:
 	@echo "卸载文件系统镜像..."
-	sudo umount /mnt/rootfs
+	sudo umount ./build/rootfs-test

@@ -48,6 +48,7 @@ debug:0xff2209c2
 - [ ] 重新把mount hash加回来
 - [ ] 研究核间中断
 - [ ] 把readp和writep分离出去
+- [ ] 写一个一键配环境的make目标
 
 
 
