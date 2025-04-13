@@ -35,7 +35,7 @@ target_include_directories(riscv-pke PRIVATE
     ${CMAKE_SOURCE_DIR}/vendor/musl/arch/generic
     ${CMAKE_SOURCE_DIR}/vendor/musl/arch/riscv64
     ${CMAKE_SOURCE_DIR}/vendor/musl/obj/include
-    ${CMAKE_BINARY_DIR}/vendor/musl/temp_install/include
+    ${CMAKE_SOURCE_DIR}/vendor/musl/temp_install/include
 )
 
 # 关键修改: 确保内核依赖于musl库和lwext4库的构建
