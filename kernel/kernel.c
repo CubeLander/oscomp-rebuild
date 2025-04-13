@@ -168,7 +168,7 @@
 	 // 最重要！先把中断服务程序挂上去，不然崩溃都不知道怎么死的。
 	 write_tp(hartid);
 	 boot_trap_setup();
- 
+	kprintf("hello world!\n");
 	 SBI_PUTCHAR('0' + hartid);
 	 SBI_PUTCHAR('M');
 	 SBI_PUTCHAR('_');
@@ -178,7 +178,6 @@
 	 SBI_PUTCHAR('R');
 	 SBI_PUTCHAR('T');
 	 SBI_PUTCHAR('\n');
- 
 	 if (hartid == 0) {
 		 // spike_file_init(); //TODO: 将文件系统迁移到 QEMU
 		 // init_dtb(dtb);
@@ -217,6 +216,19 @@
 		 pagetable_activate(g_kernel_pagetable);
 		 create_init_mm();
 		 kmem_init();
+
+
+		 kprintf("kmalloc position at %lx",kmalloc(10000));
+		 kprintf("kmalloc position at %lx",kmalloc(10000));
+		 kprintf("kmalloc position at %lx",kmalloc(10000));
+		 kprintf("kmalloc position at %lx",kmalloc(16));
+		 kprintf("kmalloc position at %lx",kmalloc(32));
+		 kprintf("kmalloc position at %lx",kmalloc(16));
+
+		 
+
+
+
 		 init_scheduler();
  
 		 init_idle_task();

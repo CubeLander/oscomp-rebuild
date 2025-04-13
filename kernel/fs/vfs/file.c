@@ -209,6 +209,7 @@ int32 file_sync(struct file* file, int32 datasync) {
 	if (!inode) return -EINVAL;
 
 	/* Call file-specific fsync operation if available */
+	//有没有实例化对应的虚函数
 	if (file->f_op && file->f_op->fsync) {
 		return file->f_op->fsync(file, 0, INT64_MAX, datasync);
 	}
