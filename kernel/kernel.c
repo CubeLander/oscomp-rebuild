@@ -33,7 +33,7 @@
  }
  
  static void kernel_vm_init(void) {
-	 kprintf("kernel_vm_init: start, membase = %lx, memsize=%lx\n",memInfo.start, memInfo.size);
+	 kprintf("kernel_vm_init: start, membase = 0x%lx, memsize=0x%lx\n",memInfo.start, memInfo.size);
 	 // extern struct mm_struct init_mm;
 	 //  映射内核代码段和只读段
 	 g_kernel_pagetable = (pagetable_t)alloc_page()->paddr;

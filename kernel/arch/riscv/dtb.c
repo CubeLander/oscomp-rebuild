@@ -36,18 +36,18 @@ void endianBigToLittle(void* bin, int size) {
  */
 void parserFdtHeader(struct FDTHeader* fdtHeader) {
 	endianBigToLittle(fdtHeader, sizeof(struct FDTHeader));
-	// log(LEVEL_MODULE, "Read FDTHeader:\n");
-	// log(LEVEL_MODULE, "magic             = 0x%lx\n", (long)fdtHeader->magic);
-	// log(LEVEL_MODULE, "totalsize's addr  = 0x%lx\n", &(fdtHeader->totalsize));
-	// log(LEVEL_MODULE, "totalsize         = %d\n", fdtHeader->totalsize);
-	// log(LEVEL_MODULE, "off_dt_struct     = 0x%x\n", fdtHeader->off_dt_struct);
-	// log(LEVEL_MODULE, "off_dt_strings    = 0x%x\n", fdtHeader->off_dt_strings);
-	// log(LEVEL_MODULE, "off_mem_rsvmap    = 0x%x\n", fdtHeader->off_mem_rsvmap);
-	// log(LEVEL_MODULE, "version           = %d\n", fdtHeader->version);
-	// log(LEVEL_MODULE, "last_comp_version = %d\n", fdtHeader->last_comp_version);
-	// log(LEVEL_MODULE, "boot_cpuid_phys   = %d\n", fdtHeader->boot_cpuid_phys);
-	// log(LEVEL_MODULE, "size_dt_strings   = %d\n", fdtHeader->size_dt_strings);
-	// log(LEVEL_MODULE, "size_dt_struct    = %d\n", fdtHeader->size_dt_struct);
+	kprintf("parserFdtHeader: Read FDTHeader:\n");
+	kprintf("parserFdtHeader: magic             = 0x%lx\n", (long)fdtHeader->magic);
+	kprintf("parserFdtHeader: totalsize's addr  = 0x%lx\n", &(fdtHeader->totalsize));
+	kprintf("parserFdtHeader: totalsize         = %d\n", fdtHeader->totalsize);
+	kprintf("parserFdtHeader: off_dt_struct     = 0x%x\n", fdtHeader->off_dt_struct);
+	kprintf("parserFdtHeader: off_dt_strings    = 0x%x\n", fdtHeader->off_dt_strings);
+	kprintf("parserFdtHeader: off_mem_rsvmap    = 0x%x\n", fdtHeader->off_mem_rsvmap);
+	kprintf("parserFdtHeader: version           = %d\n", fdtHeader->version);
+	kprintf("parserFdtHeader: last_comp_version = %d\n", fdtHeader->last_comp_version);
+	kprintf("parserFdtHeader: boot_cpuid_phys   = %d\n", fdtHeader->boot_cpuid_phys);
+	kprintf("parserFdtHeader: size_dt_strings   = %d\n", fdtHeader->size_dt_strings);
+	kprintf("parserFdtHeader: size_dt_struct    = %d\n", fdtHeader->size_dt_struct);
 }
 
 static inline uint32_t readBigEndian32(void* p) {
@@ -98,8 +98,8 @@ static void* parseFdtNode(struct FDTHeader* fdtHeader, void* node, char* parent)
 	node += 4;
 
 	node_name = (char*)node;
-	// log(LEVEL_MODULE, "node's name:    %s\n", node_name);
-	// log(LEVEL_MODULE, "node's parent:  %s\n", parent);
+	kprintf("parseFdtNode: node_name = %s\n", node_name);
+	kprintf("parseFdtNode: parent =  %s\n", parent);
 	node += (strlen((char*)node) + 1);
 	node = (void*)FOURROUNDUP((uint64_t)node); // roundup to multiple of 4
 
@@ -121,22 +121,25 @@ static void* parseFdtNode(struct FDTHeader* fdtHeader, void* node, char* parent)
 				char* name = (char*)(node + fdtHeader->off_dt_strings + nameoff);
 
 				if (name[0] != '\0') {
-					// log(LEVEL_MODULE, "name:   %s\n", name);
+					kprintf("parseFdtNode: property name:   %s\n", name);
 				}
-				// log(LEVEL_MODULE, "len:    %d\n", len);
+				kprintf("parseFdtNode: property len:    %d\n", len);
 
 				// values需要以info形式输出
 				if (len == 4 || len == 8 || len == 16 || len == 32) {
+					kprintf("parseFdtNode: property value: ");
 					const char pre[] = "values: ";
 					snprintf(strBuf, sizeof(pre), "%s", pre);
 					value = (void*)node;
 					for (int i = 0; i < len; i++) {
-						snprintf(strBuf + sizeof(pre) - 1 + 3 * i, sizeof(strBuf) - sizeof(pre), "%02x ", *(uint8_t*)(value + i));
+						kprintf("%x ", *(uint8_t*)(value + i));
+						snprintf(strBuf + sizeof(pre) - 1 + 3 * i, sizeof(strBuf) - sizeof(pre), "0x%2x ", *(uint8_t*)(value + i));
 					}
-					// log(LEVEL_MODULE, "%s\n", strBuf);
+					kprintf("\n");
+					//kprintf("parseFdtNode: %s\n", strBuf);
 				} else {
 					nodeStr = (char*)node;
-					// log(LEVEL_MODULE, "values: %s\n", nodeStr);
+					kprintf( "parseFdtNode: values: %s\n", nodeStr);
 				}
 
 				node = (void*)FOURROUNDUP((uint64_t)(node + len));

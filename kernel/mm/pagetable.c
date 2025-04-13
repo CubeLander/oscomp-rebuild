@@ -169,7 +169,7 @@ int32 pgt_map_page(pagetable_t pagetable, vaddr_t va, paddr_t pa, int32 perm) {
 		if (PTE2PA(*pte) == aligned_pa) {
 			// 同一物理页，只更新权限
 			*pte = PA2PPN(aligned_pa) | perm | PTE_V;
-			kprintf("update page=%lx perm: %lx\n", aligned_pa, perm);
+			//kprintf("pgt_map_page:update page=%lx perm: %lx\n", aligned_pa, perm);
 
 		} else {
 			// 映射到不同物理页，报错
@@ -476,13 +476,13 @@ void check_address_mapping(pagetable_t pagetable, uint64 va) {
 	vpn[1] = (va >> 21) & 0x1FF;
 	vpn[0] = (va >> 12) & 0x1FF;
 
-	kprintf("Checking mapping for address 0x%lx (vpn: %d,%d,%d)\n", va, vpn[2], vpn[1], vpn[0]);
+	kprintf("check_address_mapping: Checking mapping for address 0x%lx (vpn: %d,%d,%d)\n", va, vpn[2], vpn[1], vpn[0]);
 
 	// 检查第一级
 	pte_t* pte1 = &pagetable[vpn[2]];
-	kprintf("L1 PTE at 0x%lx: 0x%lx\n", (uint64)pte1, *pte1);
+	kprintf("check_address_mapping: L1 PTE at 0x%lx: 0x%lx\n", (uint64)pte1, *pte1);
 	if (!(*pte1 & PTE_V)) {
-		kprintf("  Invalid L1 entry!\n");
+		kprintf("check_address_mapping:  Invalid L1 entry!\n");
 		return;
 	}
 
@@ -491,9 +491,9 @@ void check_address_mapping(pagetable_t pagetable, uint64 va) {
 	// 转换为虚拟地址以便访问
 	pt2 = (pagetable_t)PHYSICAL_TO_VIRTUAL((uint64)pt2);
 	pte_t* pte2 = &pt2[vpn[1]];
-	kprintf("L2 PTE at 0x%lx: 0x%lx\n", (uint64)pte2, *pte2);
+	kprintf("check_address_mapping: L2 PTE at 0x%lx: 0x%lx\n", (uint64)pte2, *pte2);
 	if (!(*pte2 & PTE_V)) {
-		kprintf("  Invalid L2 entry!\n");
+		kprintf("check_address_mapping:   Invalid L2 entry!\n");
 		return;
 	}
 
@@ -501,14 +501,14 @@ void check_address_mapping(pagetable_t pagetable, uint64 va) {
 	pagetable_t pt3 = (pagetable_t)PTE2PA(*pte2);
 	pt3 = (pagetable_t)PHYSICAL_TO_VIRTUAL((uint64)pt3);
 	pte_t* pte3 = &pt3[vpn[0]];
-	kprintf("L3 PTE at 0x%lx: 0x%lx\n", (uint64)pte3, *pte3);
+	kprintf("check_address_mapping: L3 PTE at 0x%lx: 0x%lx\n", (uint64)pte3, *pte3);
 	if (!(*pte3 & PTE_V)) {
-		kprintf("  Invalid L3 entry!\n");
+		kprintf("check_address_mapping:   Invalid L3 entry!\n");
 		return;
 	}
 
 	// 分析最终PTE的权限
-	kprintf("  Physical addr: 0x%lx\n", PTE2PA(*pte3));
-	kprintf("  Permissions: %s%s%s%s%s%s%s\n", (*pte3 & PTE_R) ? "R" : "-", (*pte3 & PTE_W) ? "W" : "-", (*pte3 & PTE_X) ? "X" : "-", (*pte3 & PTE_U) ? "U" : "-", (*pte3 & PTE_G) ? "G" : "-",
+	kprintf("check_address_mapping:   Physical addr: 0x%lx\n", PTE2PA(*pte3));
+	kprintf("check_address_mapping:   Permissions: %s%s%s%s%s%s%s\n", (*pte3 & PTE_R) ? "R" : "-", (*pte3 & PTE_W) ? "W" : "-", (*pte3 & PTE_X) ? "X" : "-", (*pte3 & PTE_U) ? "U" : "-", (*pte3 & PTE_G) ? "G" : "-",
 	        (*pte3 & PTE_A) ? "A" : "-", (*pte3 & PTE_D) ? "D" : "-");
 }

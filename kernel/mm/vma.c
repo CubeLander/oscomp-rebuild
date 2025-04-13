@@ -74,7 +74,7 @@ struct vm_area_struct* vm_area_setup(struct mm_struct* mm, uint64 addr, uint64 l
  * 也可以只填充vma的部分页
  */
 int32 populate_vma(struct vm_area_struct* vma, vaddr_t va, size_t length, int32 prot) {
-	kprintf("populate_vma: start with vma = %lx, va = %lx, length = &lx, prot = %lx\n, ", vma, va, length, prot);
+	kprintf("populate_vma: start with vma = %lx, va = %lx, length = %lx, prot = %lx\n", vma, va, length, prot);
 	for (size_t offset = 0, page_idx = offset / PAGE_SIZE; offset < length; offset += PAGE_SIZE, page_idx++) {
 		if (vma->pages[page_idx]) {
 			continue;

@@ -50,7 +50,7 @@ run:
 	qemu-system-riscv64 \
   -machine virt \
   -nographic \
-  -m 2G \
+  -m 1G \
   -bios default \
   -kernel build/bin/riscv-pke \
   -drive file=build/disk_img/rootfs.img,format=raw,id=hd0 \

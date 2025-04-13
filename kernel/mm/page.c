@@ -155,7 +155,7 @@ struct page* addr_to_page(paddr_t addr) {
 		kprintf("addr_to_page: invalid address 0x%lx\n",addr);
 		return NULL;
 	}
-	kprintf("addr_to_page: pa 0x%lx\n",pa);
+	//kprintf("addr_to_page: pa 0x%lx\n",pa);
 	uint64 pfn = get_pfn(pa);
 	// kprintf("addr_to_page: pfn=%lx\n",pfn);
 	return pfn_to_page(pfn);
