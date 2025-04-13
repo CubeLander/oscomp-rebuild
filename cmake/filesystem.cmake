@@ -49,50 +49,12 @@ endfunction()
 # endfunction()
 
 function(install_busybox ROOT_DIR BUSYBOX_INSTALL_DIR)
-    # Create a helper script for installing busybox
-    file(WRITE ${CMAKE_BINARY_DIR}/install_busybox.sh
-"#!/bin/bash
-ROOT_DIR=\"$1\"
-BUSYBOX_DIR=\"$2\"
-
-# Copy bin directory if it exists
-if [ -d \"$BUSYBOX_DIR/bin\" ]; then
-    cp -r \"$BUSYBOX_DIR/bin\"/* \"$ROOT_DIR/bin/\" || echo \"Failed to copy bin directory\"
-else
-    echo \"Busybox bin directory not found\"
-fi
-
-# Copy sbin directory if it exists
-if [ -d \"$BUSYBOX_DIR/sbin\" ]; then
-    cp -r \"$BUSYBOX_DIR/sbin\"/* \"$ROOT_DIR/sbin/\" || echo \"Failed to copy sbin directory\"
-else
-    echo \"Busybox sbin directory not found\"
-fi
-
-# Copy usr/bin directory if it exists
-if [ -d \"$BUSYBOX_DIR/usr/bin\" ]; then
-    cp -r \"$BUSYBOX_DIR/usr/bin\"/* \"$ROOT_DIR/usr/bin/\" || echo \"Failed to copy usr/bin directory\"
-else
-    echo \"usr/bin directory not found, skipping\"
-fi
-
-# Copy usr/sbin directory if it exists
-if [ -d \"$BUSYBOX_DIR/usr/sbin\" ]; then
-    cp -r \"$BUSYBOX_DIR/usr/sbin\"/* \"$ROOT_DIR/usr/sbin/\" || echo \"Failed to copy usr/sbin directory\"
-else
-    echo \"usr/sbin directory not found, skipping\"
-fi
-"
-    )
-    
-    # Make the script executable
-    execute_process(COMMAND chmod +x ${CMAKE_BINARY_DIR}/install_busybox.sh)
     
     # Install busybox to the filesystem
     add_custom_target(
         install_busybox_fs
         DEPENDS create_fs_dirs busybox_build
-        COMMAND ${CMAKE_BINARY_DIR}/install_busybox.sh ${ROOT_DIR} ${BUSYBOX_INSTALL_DIR}
+        COMMAND ${CMAKE_SOURCE_DIR}/script/install_busybox.sh ${ROOT_DIR} ${BUSYBOX_INSTALL_DIR}
         COMMENT "Installing busybox to filesystem"
     )
 endfunction()
@@ -108,63 +70,11 @@ function(install_user_programs ROOT_DIR USER_BUILD_DIR)
 endfunction()
 
 function(create_fs_image ROOT_DIR OUTPUT_IMAGE SIZE_MB FORCE_REBUILD)
-    # Create a helper script for creating the filesystem image
-    file(WRITE ${CMAKE_BINARY_DIR}/create_filesystem.sh
-"#!/bin/bash
-# 创建文件系统镜像脚本 - 简化版本
-set -e
-
-SOURCE_DIR=\"$1\"
-OUTPUT_IMG=\"$2\"
-SIZE_MB=\"$3\"
-
-# 创建输出目录
-mkdir -p \"$(dirname \"$OUTPUT_IMG\")\"
-
-echo \"创建 $SIZE_MB MB 大小的 ext4 文件系统镜像...\"
-
-# 创建空白镜像文件
-dd if=/dev/zero of=\"$OUTPUT_IMG\" bs=1M count=\"$SIZE_MB\"
-
-# 创建 ext4 文件系统
-mkfs.ext4 -F \"$OUTPUT_IMG\"
-
-# 创建挂载点
-MOUNT_POINT=\"/tmp/fs_mount_temp\"
-mkdir -p \"$MOUNT_POINT\"
-
-# # 挂载文件系统
-# echo \"挂载镜像...\"
-# sudo mount -o loop \"$OUTPUT_IMG\" \"$MOUNT_POINT\"
-
-# # 复制文件
-# echo \"复制文件到镜像...\"
-# sudo cp -a \"$SOURCE_DIR\"/* \"$MOUNT_POINT\"/
-
-# # 设置权限
-# echo \"设置权限...\"
-# sudo chown -R root:root \"$MOUNT_POINT\"
-# sudo chmod 755 \"$MOUNT_POINT\"
-
-# # 卸载文件系统
-# echo \"卸载镜像...\"
-# sudo umount \"$MOUNT_POINT\"
-
-# # 清理挂载点
-# rmdir \"$MOUNT_POINT\"
-
-echo \"文件系统镜像创建完成: $OUTPUT_IMG\"
-"
-    )
-    
-    # Make the script executable
-    execute_process(COMMAND chmod +x ${CMAKE_BINARY_DIR}/create_filesystem.sh)
-    
     # Create the filesystem image
     add_custom_target(
         create_ext4_image
         COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/disk_img
-        COMMAND ${CMAKE_BINARY_DIR}/create_filesystem.sh 
+        COMMAND ${CMAKE_SOURCE_DIR}/script/create_filesystem.sh 
                 ${ROOT_DIR} 
                 ${OUTPUT_IMAGE} 
                 ${SIZE_MB}
@@ -195,7 +105,7 @@ function(add_system_image_target
     # install_user_programs(${ROOT_DIR} ${USER_DIR})
     
     # Create filesystem image
-    create_fs_image(${ROOT_DIR} ${OUTPUT_IMAGE} ${SIZE_MB} 0)
+    create_fs_image(${ROOT_DIR} ${OUTPUT_IMAGE} ${SIZE_MB} 1)
     
     # Add dependencies to ensure proper order
     # add_dependencies(create_fs_configs create_fs_dirs)

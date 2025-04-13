@@ -17,7 +17,7 @@ add_subdirectory(vendor)
 add_subdirectory(kernel)
 
 # 定义输出目录
-set(HOSTFS_DIR ${CMAKE_BINARY_DIR}/hostfs)
+set(ROOTFS_DIR ${CMAKE_BINARY_DIR}/hostfs)
 set(FS_IMAGE ${CMAKE_BINARY_DIR}/disk_img/rootfs.img)
 
 # 确保busybox安装目录正确传递
@@ -32,7 +32,7 @@ set(USER_BUILD_DIR ${CMAKE_BINARY_DIR}/user)
 # 添加系统镜像创建目标
 add_system_image_target(
     create_system_image
-    ${HOSTFS_DIR}
+    ${ROOTFS_DIR}
     ${FS_IMAGE}
     128
     ${BUSYBOX_INSTALL_DIR}
