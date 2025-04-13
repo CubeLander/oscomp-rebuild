@@ -5,7 +5,7 @@
             "name": "RISC-V PKE Debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/bin/riscv-pke",
+            "program": "${workspaceFolder}/build/bin/kernel.elf",
             "args": [],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",

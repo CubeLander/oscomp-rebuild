@@ -160,7 +160,7 @@
 
 
  //
- // s_start: S-mode entry point of riscv-pke OS kernel.
+ // s_start: S-mode entry point of kernel.elf OS kernel.
  //
  volatile static int32 sig = 1;
  volatile static int counter = 0;

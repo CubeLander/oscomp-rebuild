@@ -53,7 +53,7 @@ run:
   -nographic \
   -m 1G \
   -bios default \
-  -kernel build/bin/riscv-pke \
+  -kernel build/bin/kernel.elf \
   -drive file=build/disk_img/rootfs.img,format=raw,id=hd0 \
   -device virtio-blk-device,drive=hd0
 
@@ -64,14 +64,14 @@ gdb:
   -m 2G \
   -nographic \
   -bios default \
-  -kernel build/bin/riscv-pke \
+  -kernel build/bin/kernel.elf \
   -drive file=build/disk_img/rootfs.img,format=raw,id=hd0 \
   -device virtio-blk-device,drive=hd0 \
   -s -S
 
 # GDB 客户端
 gdbc:
-	riscv64-unknown-elf-gdb -x gdbinit.txt build/bin/riscv-pke -q
+	riscv64-unknown-elf-gdb -x gdbinit.txt build/bin/kernel.elf -q
 
 # 清理构建
 clean:
@@ -123,42 +123,42 @@ debug-disasm:
 # 生成符号表
 debug-symbols:
 	@echo "生成符号表..."
-	cd $(BUILD_DIR) && make riscv-pke_symbols
+	cd $(BUILD_DIR) && make kernel.elf_symbols
 
 # 生成ELF信息
 debug-elfinfo:
 	@echo "生成ELF信息..."
-	cd $(BUILD_DIR) && make riscv-pke_elfinfo
+	cd $(BUILD_DIR) && make kernel.elf_elfinfo
 
 # 生成头信息
 debug-headers:
 	@echo "生成头信息..."
-	cd $(BUILD_DIR) && make riscv-pke_headers
+	cd $(BUILD_DIR) && make kernel.elf_headers
 
 # 生成段信息
 debug-sections:
 	@echo "生成段信息..."
-	cd $(BUILD_DIR) && make riscv-pke_sections
+	cd $(BUILD_DIR) && make kernel.elf_sections
 
 # 生成字符串信息
 debug-strings:
 	@echo "生成字符串信息..."
-	cd $(BUILD_DIR) && make riscv-pke_strings
+	cd $(BUILD_DIR) && make kernel.elf_strings
 
 # 生成重定位信息
 debug-reloc:
 	@echo "生成重定位信息..."
-	cd $(BUILD_DIR) && make riscv-pke_relocations
+	cd $(BUILD_DIR) && make kernel.elf_relocations
 
 # 生成动态信息
 debug-dynamic:
 	@echo "生成动态信息..."
-	cd $(BUILD_DIR) && make riscv-pke_dynamic
+	cd $(BUILD_DIR) && make kernel.elf_dynamic
 
 # 生成大小信息
 debug-size:
 	@echo "生成大小信息..."
-	cd $(BUILD_DIR) && make riscv-pke_size
+	cd $(BUILD_DIR) && make kernel.elf_size
 
 # ============ 新增目标 - 文件系统镜像 ============
 

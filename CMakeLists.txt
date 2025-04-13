@@ -42,7 +42,7 @@ add_system_image_target(
 # 定义整体构建目标
 add_custom_target(
     oskernel ALL
-    DEPENDS riscv-pke create_system_image
+    DEPENDS kernel.elf create_system_image
     COMMENT "Building complete OS kernel with user programs and system image"
 )
 
@@ -57,28 +57,28 @@ add_custom_command(
 # 添加一个快速构建目标，不包括文件系统镜像
 add_custom_target(
     quick_build
-    DEPENDS riscv-pke
+    DEPENDS kernel.elf
     COMMENT "Building OS kernel without filesystem image"
 )
 
 # Add debug information targets for the kernel
-add_debug_info(riscv-pke)
+add_debug_info(kernel.elf)
 
 # Add convenient individual debug targets
 add_custom_target(
     kernel_disasm
-    DEPENDS riscv-pke_disasm
+    DEPENDS kernel.elf_disasm
     COMMENT "Generate kernel disassembly"
 )
 
 add_custom_target(
     kernel_symbols
-    DEPENDS riscv-pke_symbols
+    DEPENDS kernel.elf_symbols
     COMMENT "Generate kernel symbol table"
 )
 
 add_custom_target(
     kernel_debug_info
-    DEPENDS riscv-pke_debug_all
+    DEPENDS kernel.elf_debug_all
     COMMENT "Generate all kernel debug information"
 )

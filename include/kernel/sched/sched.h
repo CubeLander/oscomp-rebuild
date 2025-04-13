@@ -2,7 +2,7 @@
 #define _SCHED_H_
 
 #include <kernel/sched/process.h>
-// riscv-pke kernel supports at most 32 processes
+// kernel.elf kernel supports at most 32 processes
 #define NPROC 32
 #define TIME_SLICE_LEN  2
 extern struct task_struct* current_percpu[NCPU];

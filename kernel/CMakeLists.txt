@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(riscv-pke C ASM)
+project(kernel C ASM)
 
 # 设置 RISC-V 交叉编译工具链
 set(CMAKE_SYSTEM_NAME Generic)
@@ -26,10 +26,10 @@ file(GLOB_RECURSE KERNEL_SOURCES "*.c")
 file(GLOB_RECURSE KERNEL_ASM_SOURCES "**/*.S")
 file(GLOB_RECURSE KERNEL_ASM_SOURCES "*.S")
 
-add_executable(riscv-pke ${KERNEL_SOURCES} ${KERNEL_ASM_SOURCES})
+add_executable(kernel.elf ${KERNEL_SOURCES} ${KERNEL_ASM_SOURCES})
 
 # 修改后的头文件包含路径，只保留include/和vendor/musl/include/
-target_include_directories(riscv-pke PRIVATE 
+target_include_directories(kernel.elf PRIVATE 
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/vendor/musl/include
     ${CMAKE_SOURCE_DIR}/vendor/musl/arch/generic
@@ -40,10 +40,10 @@ target_include_directories(riscv-pke PRIVATE
 
 # 关键修改: 确保内核依赖于musl库和lwext4库的构建
 # 需要明确依赖musl_build目标，因为它是ExternalProject创建的实际构建目标
-add_dependencies(riscv-pke musl_build lwext4)
+add_dependencies(kernel.elf musl_build lwext4)
 
 # 直接链接库文件，确保它们已经构建完成
-target_link_libraries(riscv-pke PRIVATE 
+target_link_libraries(kernel.elf PRIVATE 
     ${CMAKE_BINARY_DIR}/lib/liblwext4.a
     ${CMAKE_BINARY_DIR}/lib/libc.a
 )
