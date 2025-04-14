@@ -11,3 +11,5 @@ awatch *(uint64_t*)0x0
 display /5i $pc
 # b s_start
 b smode_trap_vector
+b printf
+b do_syscall

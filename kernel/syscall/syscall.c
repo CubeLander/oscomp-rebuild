@@ -76,7 +76,8 @@ static struct syscall_entry syscall_table[] = {
  * The main syscall dispatcher
  */
 long do_syscall(long syscall_num, long a0, long a1, long a2, long a3, long a4, long a5) {
-
+	kprintf("do_syscall: syscall_num = %ld, a0 = %ld, a1 = %ld, a2 = %ld, a3 = %ld, a4 = %ld, a5 = %ld\n",
+		syscall_num, a0, a1, a2, a3, a4, a5);
 	/* Validate syscall number */
 	if (syscall_num < 0 || syscall_num >= SYSCALL_TABLE_SIZE || !syscall_table[syscall_num].func) {
 		kprintf("Invalid syscall: %ld\n", syscall_num);

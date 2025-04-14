@@ -128,12 +128,12 @@ static void* parseFdtNode(struct FDTHeader* fdtHeader, void* node, char* parent)
 				// values需要以info形式输出
 				if (len == 4 || len == 8 || len == 16 || len == 32) {
 					kprintf("parseFdtNode: property value: ");
-					const char pre[] = "values: ";
-					snprintf(strBuf, sizeof(pre), "%s", pre);
+					//const char pre[] = "values: ";
+					//snprintf(strBuf, sizeof(pre), "%s", pre);
 					value = (void*)node;
 					for (int i = 0; i < len; i++) {
 						kprintf("%x ", *(uint8_t*)(value + i));
-						snprintf(strBuf + sizeof(pre) - 1 + 3 * i, sizeof(strBuf) - sizeof(pre), "0x%2x ", *(uint8_t*)(value + i));
+						//snprintf(strBuf + sizeof(pre) - 1 + 3 * i, sizeof(strBuf) - sizeof(pre), "0x%2x ", *(uint8_t*)(value + i));
 					}
 					kprintf("\n");
 					//kprintf("parseFdtNode: %s\n", strBuf);

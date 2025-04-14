@@ -12,6 +12,7 @@
  #include <kernel/types.h>
  #include <kernel/util.h>
  #include <kernel/vfs.h>
+ #include <stdio.h>
  
  // 分配 (NCPU + 1) 个保护页 + NCPU 个实际栈页
  __attribute__((aligned(PAGE_SIZE))) char stack0[PAGE_SIZE * (NCPU + 1 + NCPU)];
@@ -168,7 +169,7 @@
 	 // 最重要！先把中断服务程序挂上去，不然崩溃都不知道怎么死的。
 	 write_tp(hartid);
 	 boot_trap_setup();
- 
+	 printf("test std syscall\n");
 	 SBI_PUTCHAR('0' + hartid);
 	 SBI_PUTCHAR('M');
 	 SBI_PUTCHAR('_');
