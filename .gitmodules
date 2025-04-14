@@ -7,3 +7,4 @@
 [submodule "vendor/musl"]
 	path = vendor/musl
 	url = https://github.com/CubeLander/musl.git
+	branch = master

@@ -17,6 +17,10 @@ SCRIPT_DIR := $(PROJECT_ROOT)/script
 .PHONY: fs-image fs-dirs fs-configs fs-install-busybox fs-install-user
 .PHONY: mount umount
 
+# 重新构建
+setup:
+	@bash script/setup.sh 
+
 submodule:
 	@echo "更新子模块..."
 	git submodule init
@@ -71,7 +75,7 @@ gdb:
 
 # GDB 客户端
 gdbc:
-	riscv64-unknown-elf-gdb -x gdbinit.txt build/bin/kernel.elf -q
+	gdb-multiarch -x gdbinit.txt build/bin/kernel.elf -q
 
 # 清理构建
 clean:

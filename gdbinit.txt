@@ -1,3 +1,4 @@
+set arch riscv:rv64
 target remote localhost:1234
 file build/bin/kernel.elf
 # 如果有 OpenSBI 的 ELF 文件，取消下面的注释并修改路径
