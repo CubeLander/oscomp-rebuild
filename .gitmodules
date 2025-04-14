@@ -1,6 +1,7 @@
 [submodule "vendor/busybox"]
 	path = vendor/busybox
 	url = https://github.com/CubeLander/busybox.git
+	branch = master
 [submodule "vendor/lwext4"]
 	path = vendor/lwext4
 	url = https://github.com/CubeLander/lwext4.git
