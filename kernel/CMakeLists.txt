@@ -4,13 +4,19 @@ project(kernel C ASM)
 # 设置 RISC-V 交叉编译工具链
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR riscv64)
-set(CMAKE_C_COMPILER riscv64-unknown-elf-gcc)
-set(CMAKE_CXX_COMPILER riscv64-unknown-elf-g++)
-set(CMAKE_ASM_COMPILER riscv64-unknown-elf-gcc)
+# riscv64-unknown-elf
+# set(CMAKE_C_COMPILER riscv64-unknown-elf-gcc)
+# set(CMAKE_CXX_COMPILER riscv64-unknown-elf-g++)
+# set(CMAKE_ASM_COMPILER riscv64-unknown-elf-gcc)
+# riscv64-linux-gnu-gcc
+set(CMAKE_C_COMPILER riscv64-linux-gnu-gcc)
+set(CMAKE_CXX_COMPILER riscv64-linux-gnu-g++)
+set(CMAKE_ASM_COMPILER riscv64-linux-gnu-gcc)
 
 # 编译标志
-set(CMAKE_C_FLAGS "-Wall -Werror -gdwarf-3 -fno-builtin -nostdlib -nostartfiles -nostdinc -ffreestanding -T ${CMAKE_SOURCE_DIR}/kernel/kernel.lds -D__NO_INLINE__ -mcmodel=medany -g -Og -std=gnu99 -Wno-unused -Wno-attributes -Wl,--no-relax -Wl,-z,notext -fno-delete-null-pointer-checks -fno-PIE -fno-omit-frame-pointer")
-
+set(CMAKE_C_FLAGS "-Wall -Werror -Wl,-Map=kernel.map -nostartfiles -gdwarf-3 -fno-builtin -nostartfiles -nostdinc -ffreestanding -D__NO_INLINE__ -mcmodel=medany -g -Og -std=gnu99 -Wno-unused -Wno-attributes -Wl,--no-relax -Wl,--build-id=none -Wl,-z,notext -fno-delete-null-pointer-checks -fno-PIE -fno-pic -fno-omit-frame-pointer -lgcc")
+# 设置静态链接
+set(CMAKE_EXE_LINKER_FLAGS "-static  -Xlinker -T ${CMAKE_SOURCE_DIR}/kernel/kernel.lds" CACHE STRING "Static linking flags" FORCE)
 # Apply the same flags to ASM
 set(CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS}")
 
@@ -46,4 +52,5 @@ add_dependencies(kernel.elf musl_build lwext4)
 target_link_libraries(kernel.elf PRIVATE 
     ${CMAKE_BINARY_DIR}/lib/liblwext4.a
     ${CMAKE_BINARY_DIR}/lib/libc.a
+
 )

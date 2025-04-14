@@ -18,7 +18,7 @@ dd if=/dev/zero of=$OUTPUT_IMG bs=1M count=$SIZE_MB
 mkfs.ext4 -F $OUTPUT_IMG
 
 # 创建挂载点
-MOUNT_POINT=/tmp/fs_mount_temp
+MOUNT_POINT=./build/mount_temp
 mkdir -p $MOUNT_POINT
 
 # 挂载文件系统
