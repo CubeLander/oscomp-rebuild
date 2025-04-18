@@ -23,6 +23,7 @@ setup:
 
 submodule:
 	@echo "更新子模块..."
+	git submodule deinit --all
 	git submodule init
 	git submodule update --recursive
 

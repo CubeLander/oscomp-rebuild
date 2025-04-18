@@ -169,7 +169,7 @@
 	 // 最重要！先把中断服务程序挂上去，不然崩溃都不知道怎么死的。
 	 write_tp(hartid);
 	 boot_trap_setup();
-	 printf("test std syscall\n");
+	 //printf("test std syscall\n");
 	 SBI_PUTCHAR('0' + hartid);
 	 SBI_PUTCHAR('M');
 	 SBI_PUTCHAR('_');
@@ -192,17 +192,6 @@
 	 // lab1_challenge1 为了调试便利，禁用了外部时钟中断：
 	 // timerinit(hartid);
  
-	 // switch to supervisor mode (S mode) and jump to s_start(), i.e., set pc to
-	 // mepc
-	 // asm volatile("mret");
-	 // 在内核初始化早期添加
-	 // kprintf("Current privilege level: %ld\n", (read_csr(mstatus) >> 11) & 3);
-	 // kprintf("stvec: 0x%lx\n", read_csr(stvec));
-	 // kprintf("medeleg: 0x%lx\n", read_csr(medeleg));
-	 // kprintf("mideleg: 0x%lx\n", read_csr(mideleg));
-	 // kprintf("sstatus: 0x%lx\n", read_csr(sstatus));
-	 // kprintf("sie: 0x%lx\n", read_csr(sie));
-	 // kprintf("In m_start, hartid:%d\n", hartid);
 	 write_tp(hartid);
  
 	 //write_csr(stvec, (uint64)start_trap);
