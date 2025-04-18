@@ -1,6 +1,7 @@
 #!/bin/bash
 # apt-cache search riscv
 sudo apt update
+sudo apt install clang-format
 sudo apt install software-properties-common
 sudo apt install gcc-12-riscv64-linux-gnu 
 sudo apt install g++-12-riscv64-linux-gnu

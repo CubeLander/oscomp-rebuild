@@ -3,6 +3,8 @@
 		"vfs.h": "c",
 		"syscall.h": "c",
 		"pthread.h": "c",
-		"util.h": "c"
+		"util.h": "c",
+		"io_vector.h": "c",
+		"list.h": "c"
 	}
 }

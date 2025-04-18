@@ -158,6 +158,17 @@
 	 return;
  }
  
+void mount_root_fs(){
+
+
+
+
+	
+}
+
+
+
+
 
 
  //
@@ -215,6 +226,7 @@
  
 		 // init_scheduler();
 		 vfs_init();
+		 mount_root_fs();
 		 sig = 0;
 	 } else {
 		 while (sig) {
