@@ -159,11 +159,10 @@
  }
  
 void mount_root_fs(){
-
-
-
-
 	
+
+
+
 }
 
 

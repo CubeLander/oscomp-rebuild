@@ -10,7 +10,6 @@ KERNEL_DIR := $(PROJECT_ROOT)/kernel
 USER_DIR := $(PROJECT_ROOT)/user
 VENDOR_DIR := $(PROJECT_ROOT)/vendor
 SCRIPT_DIR := $(PROJECT_ROOT)/script
-name = temp-branch
 
 # MUSL 构建目标
 .PHONY: musl musl-clean build kernel busybox run gdb gdbc clean rebuild lwext4 example-with-musl cmake-build submodule
@@ -54,7 +53,8 @@ busybox:
 	cd $(BUILD_DIR) && cmake .. && make busybox_build
 
 branch:
-	@bash ./script/make-branch.sh $(name)
+	@bash ./script/make-branch.sh
+
 # 运行 QEMU
 run: 
 	qemu-system-riscv64 \
