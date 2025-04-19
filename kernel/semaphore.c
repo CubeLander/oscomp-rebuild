@@ -1,9 +1,6 @@
-#include <kernel/semaphore.h>
 
-
-
-#include <kernel/sched/sched.h>
-#include <kernel/util/print.h>
+#include <kernel/sched.h>
+#include <kernel/util.h>
 //信号灯库
 semaphore sem_pool[NSEM];
 // 获取一个新的信号灯编号，成功返回0-64，失败返回-1
