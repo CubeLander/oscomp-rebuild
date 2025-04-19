@@ -80,7 +80,7 @@ gdb:
 
 # GDB 客户端
 gdbc:
-	gdb-multiarch -x gdbinit.txt build/bin/kernel.elf -q
+	gdb-multiarch -x script/gdbinit.txt build/bin/kernel.elf -q
 
 # 清理构建
 clean:
