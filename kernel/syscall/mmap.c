@@ -10,7 +10,7 @@ int64 sys_mmap(void* addr, size_t length, int32 prot, int32 flags, int32 fd, off
 }
 
 int64 do_mmap(void* addr, size_t length, int32 prot, int32 flags, int32 fd, off_t offset) {
-	struct mm_struct* mm = current_task()->mm;
+	struct mm_struct* mm = current->mm;
 	struct file* file = fdtable_getFile(current->fdtable, fd);
 	CHECK_PTR_VALID(file,-EBADF);
 

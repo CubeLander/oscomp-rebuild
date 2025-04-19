@@ -249,7 +249,7 @@ int32 hashtable_remove(struct hashtable* ht, struct list_head* node) {
 
 	/* 检查节点是否在链表中(通过检查是否被正确链接) */
 	if (!list_empty(node)) {
-		list_del_init(node);
+		list_del(node);
 		atomic_dec(&ht->items);
 		spinlock_unlock(&ht->buckets[idx].lock);
 		return 0;
@@ -280,7 +280,7 @@ int32 hashtable_remove_by_key(struct hashtable* ht, const void* key) {
 	list_for_each_safe(pos, tmp, &ht->buckets[idx].head) {
 		void* node_key = ht->get_key(pos);
 		if (ht->key_equals(node_key, key)) {
-			list_del_init(pos);
+			list_del(pos);
 			atomic_dec(&ht->items);
 			spinlock_unlock(&ht->buckets[idx].lock);
 			return 0;

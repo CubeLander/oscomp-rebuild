@@ -26,7 +26,7 @@ int64 sys_write(int32 fd, const void* buf, size_t count) {
  * Kernel-internal implementation of write syscall
  */
 ssize_t do_write(int32 fd, const void* buf, size_t count) {
-	struct file* filp = fdtable_getFile(current_task()->fdtable,fd);
+	struct file* filp = fdtable_getFile(current->fdtable,fd);
 	if (!filp) return -EBADF;
 
 	ssize_t ret = file_write(filp, buf, count, &filp->f_pos);

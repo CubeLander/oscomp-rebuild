@@ -197,7 +197,7 @@ struct vfsmount* superblock_acquireMount(struct superblock* sb, int32 flags, con
 
 	// Fall back to generic mount creation
 	mnt = kmalloc(sizeof(struct vfsmount));
-	CHECK_PTR_VALID(mnt, ERR_PTR(-ENOMEM));
+	CHECK_PTR_VALID(mnt, ERR_TO_PTR(-ENOMEM));
 
 	// Initialize the mount structure
 	memset(mnt, 0, sizeof(struct vfsmount));
@@ -208,7 +208,7 @@ struct vfsmount* superblock_acquireMount(struct superblock* sb, int32 flags, con
 	mnt->mnt_id = mount_id++;
 
 	// Store device name if provided
-	if (device_path && *device_path) { mnt->mnt_devname = kstrdup(device_path, GFP_KERNEL); }
+	if (device_path && *device_path) { mnt->mnt_devname = kstrdup(device_path); }
 
 	// Initialize list heads
 	INIT_LIST_HEAD(&mnt->mnt_child_list);
@@ -240,7 +240,7 @@ struct vfsmount* superblock_acquireMount(struct superblock* sb, int32 flags, con
  * Returns the new inode or NULL if allocation failed.
  */
 struct inode* superblock_createInode(struct superblock* sb) {
-	CHECK_PTR_VALID(sb, ERR_PTR(-EINVAL));
+	CHECK_PTR_VALID(sb, ERR_TO_PTR(-EINVAL));
 	struct inode* inode;
     /* Get new inode number */
 	int64 ino;
@@ -257,7 +257,7 @@ struct inode* superblock_createInode(struct superblock* sb) {
 	} else {
 		inode = kmalloc(sizeof(struct inode));
 	}
-	CHECK_PTR_VALID(inode, ERR_PTR(-ENOMEM));
+	CHECK_PTR_VALID(inode, ERR_TO_PTR(-ENOMEM));
 
 	/* Initialize the inode */
 	memset(inode, 0, sizeof(struct inode));

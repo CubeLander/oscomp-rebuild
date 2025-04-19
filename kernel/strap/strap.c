@@ -31,7 +31,7 @@ void handle_mtimer_trap() {
   if(hartid == 0){
 	jiffies++;
   }
-  CURRENT->tick_count++;
+  current->tick_count++;
 
   write_csr(sip, read_csr(sip) & ~SIP_SSIP);
 }
@@ -45,7 +45,7 @@ void handle_mtimer_trap() {
  * @param stval 访问时导致页错误的虚拟地址
  */
 void handle_user_page_fault(uint64 mcause, uint64 sepc, uint64 stval) {
-	struct task_struct *proc = CURRENT;
+	struct task_struct *proc = current;
 	uint64 addr = stval;
 	
 	kprintf("sepc=%lx, handle_page_fault: %lx\n", sepc, addr);
@@ -159,8 +159,8 @@ error:
 //
 void rrsched() {
   int32 hartid = read_tp();
-  if (CURRENT->tick_count >= TIME_SLICE_LEN) {
-    CURRENT->tick_count = 0;
+  if (current->tick_count >= TIME_SLICE_LEN) {
+    current->tick_count = 0;
   }
 }
 
@@ -292,9 +292,9 @@ void user_trap_handler(struct trapframe *tf) {
   // we will consider other previous case in lab1_3 (interrupt).
 
 
-  assert(CURRENT);
+  assert(current);
   // save user process counter.
-  CURRENT->trapframe->epc = read_csr(sepc);
+  current->trapframe->epc = read_csr(sepc);
 
   // if the cause of trap is syscall from user application.
   // read_csr() and CAUSE_USER_ECALL are macros defined in kernel/riscv.h
@@ -303,7 +303,7 @@ void user_trap_handler(struct trapframe *tf) {
   // use switch-case instead of if-else, as there are many cases since lab2_3.
   switch (cause) {
   case CAUSE_USER_ECALL:
-    handle_syscall(CURRENT->trapframe);
+    handle_syscall(current->trapframe);
     // kprintf("coming back from syscall\n");
     break;
   case CAUSE_MTIMER_S_TRAP:
@@ -327,7 +327,7 @@ void user_trap_handler(struct trapframe *tf) {
 
   // kprintf("calling switch_to, current = 0x%x\n", current);
   // continue (come back to) the execution of current process.
-  switch_to(CURRENT);
+  switch_to(current);
 }
 
 

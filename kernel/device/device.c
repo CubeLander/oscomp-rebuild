@@ -58,7 +58,7 @@ int32 create_device_nodes(void) {
 
 		/* Create the device node */
 		struct dentry* nod_dentry = vfs_mknod(dev_dir, name, mode, bdev->bd_dev);
-		if (ERR_PTR(nod_dentry)) {
+		if (ERR_TO_PTR(nod_dentry)) {
 			kprintf("Failed to create device node /dev/%s: %d\n", name, ret);
 			/* Continue with other devices */
 		} else {

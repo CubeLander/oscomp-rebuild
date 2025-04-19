@@ -34,7 +34,7 @@ int64 sys_mount(const char* source, const char* target, const char* fstype, uint
 
 int64 sys_getpid(void) {
 	/* Implementation here */
-	return current_task()->pid;
+	return current->pid;
 }
 
 

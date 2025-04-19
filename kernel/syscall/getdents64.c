@@ -77,7 +77,7 @@ int32 do_getdents64(int32 fd, struct linux_dirent* dirp, size_t count) {
 	if (!dirp) return -EFAULT;
 
 	/* Get file from fd */
-	struct file* file = fdtable_getFile(current_task()->fdtable, fd);
+	struct file* file = fdtable_getFile(current->fdtable, fd);
 	if (!file) return -EBADF;
 
 	/* Check if file is a directory */

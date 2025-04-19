@@ -24,14 +24,14 @@ struct dentry* vfs_mkdir_path(const char* path, fmode_t mode) {
 	int32 name_pos;
 	struct dentry* result;
 
-	if (!path || !*path) return ERR_PTR(-EINVAL);
+	if (!path || !*path) return ERR_TO_PTR(-EINVAL);
 
 	/* Special case for creating root - impossible */
-	if (strcmp(path, "/") == 0) return ERR_PTR(-EEXIST);
+	if (strcmp(path, "/") == 0) return ERR_TO_PTR(-EEXIST);
 
 	/* Resolve the parent directory */
 	name_pos = resolve_path_parent(path, &parent);
-	if (name_pos < 0) return ERR_PTR(name_pos); /* Error code */
+	if (name_pos < 0) return ERR_TO_PTR(name_pos); /* Error code */
 
 	/* Create the directory */
 	result = dentry_mkdir(parent.dentry, &path[name_pos], mode);
@@ -51,25 +51,25 @@ struct dentry* vfs_mkdir_path(const char* path, fmode_t mode) {
  * Mounts a filesystem of the specified type.
  * 这个函数只负责生成挂载点，在后续的mountpoint attachment中会将挂载点关联到目标路径
  *
- * Returns the superblock on success, ERR_PTR on failure
+ * Returns the superblock on success, ERR_TO_PTR on failure
  * 正在优化的vfs_kern_mount函数
  */
 struct vfsmount* vfs_kern_mount(struct fstype* fstype, int32 flags, const char* device_path, const void* data) {
-	CHECK_PTR_VALID(fstype, ERR_PTR(-EINVAL));
+	CHECK_PTR_VALID(fstype, ERR_TO_PTR(-EINVAL));
 	dev_t dev_id = 0;
 	/***** 对于挂载实体设备的处理 *****/
 	if (device_path && *device_path) {
 		int32 ret = lookup_dev_id(device_path, &dev_id);
 		if (ret < 0) {
 			kprintf("VFS: Failed to get device ID for %s\n", device_path);
-			return ERR_PTR(ret);
+			return ERR_TO_PTR(ret);
 		}
 	}
 	struct superblock* sb = fstype_mount(fstype, flags, dev_id, data);
-	CHECK_PTR_VALID(sb, ERR_PTR(-ENOMEM));
+	CHECK_PTR_VALID(sb, ERR_TO_PTR(-ENOMEM));
 
 	struct vfsmount* mount = superblock_acquireMount(sb, flags, device_path);
-	CHECK_PTR_VALID(mount, ERR_PTR(-ENOMEM));
+	CHECK_PTR_VALID(mount, ERR_TO_PTR(-ENOMEM));
 
 	return mount;
 }
@@ -349,21 +349,21 @@ int32 vfs_pathwalk(struct dentry* base_dentry, struct vfsmount* base_mnt, const 
  * @name: Name of the new directory
  * @mode: Directory permissions
  *
- * Returns: New directory dentry on success, ERR_PTR on failure
+ * Returns: New directory dentry on success, ERR_TO_PTR on failure
  */
 struct dentry* vfs_mkdir(struct dentry* parent, const char* name, fmode_t mode) {
-	if (!name || !*name) return ERR_PTR(-EINVAL);
+	if (!name || !*name) return ERR_TO_PTR(-EINVAL);
 	int32 pos = 0;
 	if (!parent) {
 		struct path parent_path;
 		pos = resolve_path_parent(name, &parent_path);
-		if (pos < 0) return ERR_PTR(pos); /* Error code */
+		if (pos < 0) return ERR_TO_PTR(pos); /* Error code */
 		parent = parent_path.dentry;
 		path_destroy(&parent_path);
 	}
 
 	/* Validate parent after potential NULL handling */
-	if (!parent) return ERR_PTR(-EINVAL);
+	if (!parent) return ERR_TO_PTR(-EINVAL);
 
 	/* Create the directory */
 	return dentry_mkdir(parent, &name[pos], mode);
@@ -379,19 +379,19 @@ struct dentry* vfs_mkdir(struct dentry* parent, const char* name, fmode_t mode) 
  * Creates a special file (device node, FIFO, socket). If parent is NULL,
  * resolves the path to find the parent directory.
  *
- * Returns: New dentry on success, ERR_PTR on failure
+ * Returns: New dentry on success, ERR_TO_PTR on failure
  */
 struct dentry* vfs_mknod(struct dentry* parent, const char* name, mode_t mode, dev_t dev) {
 	const char* filename = name;
 	int32 name_pos = 0;
 
-	if (!name || !*name) return ERR_PTR(-EINVAL);
+	if (!name || !*name) return ERR_TO_PTR(-EINVAL);
 
 	/* Handle NULL parent case by resolving the path */
 	if (!parent) {
 		struct path parent_path;
 		name_pos = resolve_path_parent(name, &parent_path);
-		if (name_pos < 0) return ERR_PTR(name_pos); /* Error code */
+		if (name_pos < 0) return ERR_TO_PTR(name_pos); /* Error code */
 
 		parent = parent_path.dentry;
 		filename = &name[name_pos];
@@ -445,28 +445,28 @@ struct file *vfs_alloc_file(const struct path *path, int32 flags, mode_t mode)
     
     /* 检查路径的有效性 */
     if (!path || !path->dentry || !path->mnt)
-        return ERR_PTR(-EINVAL);
+        return ERR_TO_PTR(-EINVAL);
         
     inode = path->dentry->d_inode;
     
     /* 验证 flags 有效性 */
     error = vfs_validate_flags(flags);
     if (error)
-        return ERR_PTR(error);
+        return ERR_TO_PTR(error);
     
     /* 权限检查 */
     if ((flags & O_ACCMODE) != O_RDONLY) {
         /* 检查写入权限 */
         if (inode && inode_isReadonly(inode))
-            return ERR_PTR(-EROFS);  // 只读文件系统
+            return ERR_TO_PTR(-EROFS);  // 只读文件系统
         
         if (inode && ((flags & O_ACCMODE) == O_WRONLY || (flags & O_ACCMODE) == O_RDWR)) {
             if (S_ISDIR(inode->i_mode))
-                return ERR_PTR(-EISDIR);  // 不能写入目录
+                return ERR_TO_PTR(-EISDIR);  // 不能写入目录
                 
             error = inode_permission(inode, MAY_WRITE);
             if (error)
-                return ERR_PTR(error);
+                return ERR_TO_PTR(error);
         }
     }
     
@@ -488,7 +488,7 @@ struct file *vfs_alloc_file(const struct path *path, int32 flags, mode_t mode)
     /* 分配文件结构 */
     file = kmalloc(sizeof(struct file));
     if (!file)
-        return ERR_PTR(-ENOMEM);
+        return ERR_TO_PTR(-ENOMEM);
     
     /* 基本初始化 */
     memset(file, 0, sizeof(struct file));
@@ -521,7 +521,7 @@ struct file *vfs_alloc_file(const struct path *path, int32 flags, mode_t mode)
      */
     if (flags & O_CREAT) {
         /* 应用当前进程的 umask */
-        mode &= ~current_task()->fs->umask;
+        mode &= ~current->fs->umask;
         /* 确保基本权限位存在 */
         mode |= S_IFREG;  // 确保这是一个常规文件
     }

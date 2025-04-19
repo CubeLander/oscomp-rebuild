@@ -188,7 +188,7 @@ int32 mount_add(struct vfsmount* newmnt, struct path* mountpoint, int32 flags)
         mount_unref(newmnt->mnt_path.mnt);
         newmnt->mnt_path.dentry = NULL;
         newmnt->mnt_path.mnt = NULL;
-        list_del_init(&newmnt->mnt_child_node);
+        list_del(&newmnt->mnt_child_node);
         return error;
     }
     
@@ -236,18 +236,18 @@ void __mount_unhash(struct vfsmount* mnt)
  * target location. This makes the contents of source_path visible at the
  * mount_point location.
  *
- * Returns: The new vfsmount on success, ERR_PTR on failure
+ * Returns: The new vfsmount on success, ERR_TO_PTR on failure
  */
 struct vfsmount* mount_bind(struct path* source_path, uint64 flags) {
     struct vfsmount* newmnt;
     
     if (!source_path || !source_path->dentry || !source_path->mnt)
-        return ERR_PTR(-EINVAL);
+        return ERR_TO_PTR(-EINVAL);
     
     /* Allocate a new vfsmount structure */
     newmnt = kmalloc(sizeof(struct vfsmount));
     if (!newmnt)
-        return ERR_PTR(-ENOMEM);
+        return ERR_TO_PTR(-ENOMEM);
     
     memset(newmnt, 0, sizeof(struct vfsmount));
     

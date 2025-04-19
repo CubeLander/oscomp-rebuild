@@ -62,7 +62,7 @@ static int32 static_ramfs_fill_super(struct fstype* type, struct superblock* sb,
 	}
 
 	memset(root_dentry, 0, sizeof(struct dentry));
-	root_dentry->d_name->name = kstrdup("/", 0);
+	root_dentry->d_name->name = kstrdup("/");
 	// root_dentry->d_name.name = "/";
 	root_dentry->d_name->len = 1;
 	root_dentry->d_name->hash = full_name_hash("/", 1);
@@ -91,7 +91,7 @@ static struct superblock* static_ramfs_mount(struct fstype* type, int32 flags, d
 
 	// Allocate superblock
 	sb = kmalloc(sizeof(struct superblock));
-	if (!sb) return ERR_PTR(-ENOMEM);
+	if (!sb) return ERR_TO_PTR(-ENOMEM);
 
 	memset(sb, 0, sizeof(struct superblock));
 
@@ -103,7 +103,7 @@ static struct superblock* static_ramfs_mount(struct fstype* type, int32 flags, d
 	error = static_ramfs_fill_super(type, sb, data, flags & MS_SILENT);
 	if (error) {
 		kfree(sb);
-		return ERR_PTR(error);
+		return ERR_TO_PTR(error);
 	}
 
 	return sb;

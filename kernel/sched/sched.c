@@ -48,7 +48,7 @@ struct task_struct *alloc_empty_process() {
 //
 void insert_to_ready_queue(struct task_struct *proc) {
   kprintf("going to insert process %d to ready queue.\n", proc->pid);
-  list_add(&proc->ready_queue_node, &ready_queue);
+  list_add_tail(&proc->ready_queue_node, &ready_queue);
 }
 
 //
@@ -61,7 +61,7 @@ void schedule() {
   kprintf("schedule: start\n");
   extern struct task_struct *procs[NPROC];
   int32 hartid = read_tp();
-  struct task_struct *cur = CURRENT;
+  struct task_struct *cur = current;
   // kprintf("debug\n");
   if (cur &&
       ((cur->state == TASK_INTERRUPTIBLE) |
@@ -104,17 +104,17 @@ void schedule() {
     // }
   }
 
-  CURRENT = container_of(ready_queue.next, struct task_struct, ready_queue_node);
-  list_del_init(ready_queue.next);
+  current = container_of(ready_queue.next, struct task_struct, ready_queue_node);
+  list_del(ready_queue.next);
   if (cur->ktrapframe != NULL) {
-    kprintf("going to schedule process %d to run in s-mode.\n", CURRENT->pid);
+    kprintf("going to schedule process %d to run in s-mode.\n", current->pid);
 
     restore_all_registers(cur->ktrapframe);
     kfree(cur->ktrapframe);
     cur->ktrapframe = NULL;
     return;
   } else {
-    kprintf("going to schedule process %d to run in u-mode.\n", CURRENT->pid);
+    kprintf("going to schedule process %d to run in u-mode.\n", current->pid);
     switch_to(cur);
   }
 }
@@ -122,7 +122,7 @@ void schedule() {
 void switch_to(struct task_struct *proc) {
 
   assert(proc);
-  CURRENT = proc;
+  current = proc;
 
   extern char smode_trap_vector[];
   write_csr(stvec, (uint64)smode_trap_vector);
@@ -171,4 +171,18 @@ struct task_struct *find_process_by_pid(pid_t pid) {
     }
     
     return NULL;  // Process not found
+}
+
+
+/**
+ * set_current_task - Explicitly set the current task for the calling CPU
+ * @task: Task to set as current
+ * 
+ * Sets the specified task as the current task for the CPU core
+ * that called this function. This is primarily used during
+ * initialization or special operations like setting up the init task.
+ */
+void set_current_task(struct task_struct* task) {
+    int32 hartid = read_tp();
+    current_percpu[hartid] = task;
 }

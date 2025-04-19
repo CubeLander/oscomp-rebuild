@@ -84,7 +84,7 @@
 	*/
  int32 setup_init_fds(struct task_struct* init_task) {
 	 int32 fd, console_fd;
-	 struct task_struct* saved_task = current_task();
+	 struct task_struct* saved_task = current;
  
 	 // Temporarily set current to init task
 	 set_current_task(init_task);

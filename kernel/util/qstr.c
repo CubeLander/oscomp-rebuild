@@ -108,7 +108,7 @@ struct qstr* qstr_create(const char* name) {
 	q = kmalloc(sizeof(struct qstr));
 	if (!q) return NULL;
 
-	q->name = (const char*)kstrdup(name, GFP_KERNEL);
+	q->name = (const char*)kstrdup(name);
 	if (!q->name) {
 		kfree(q);
 		return NULL;

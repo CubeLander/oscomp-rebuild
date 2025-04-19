@@ -106,7 +106,7 @@ int32 do_send_signal(pid_t pid, int32 sig)
 
     // Special case: pid 0 means current process
     if (pid == 0) {
-        p = current_task();
+        p = current;
         if (!p)
             return -ESRCH;
     } else {
@@ -156,7 +156,7 @@ int32 do_send_signal(pid_t pid, int32 sig)
  */
 int32 do_sigaction(int32 sig, const struct sigaction *act, struct sigaction *oldact)
 {
-    struct task_struct *p = current_task();
+    struct task_struct *p = current;
     
     if (!p)
         return -ESRCH;
@@ -189,7 +189,7 @@ int32 do_sigaction(int32 sig, const struct sigaction *act, struct sigaction *old
  */
 int32 do_sigprocmask(int32 how, const sigset_t *set, sigset_t *oldset)
 {
-    struct task_struct *p = current_task();
+    struct task_struct *p = current;
     sigset_t new_blocked;
     
     if (!p)
@@ -276,7 +276,7 @@ int32 do_kill(pid_t pid, int32 sig)
  */
 void do_signal_delivery(void)
 {
-    struct task_struct *p = current_task();
+    struct task_struct *p = current;
     int32 sig;
     
     if (!p)
@@ -350,7 +350,7 @@ void do_signal_delivery(void)
  */
 int32 do_sigsuspend(const sigset_t *mask)
 {
-    struct task_struct *p = current_task();
+    struct task_struct *p = current;
     sigset_t old_blocked;
     
     if (!p || !mask)

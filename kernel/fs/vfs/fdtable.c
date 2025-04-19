@@ -670,10 +670,10 @@ uint32 fdtable_getFdFlags(struct fdtable* fdt, uint64 fd) {
  * Kernel-internal implementation of close syscall
  */
 int32 do_close(int32 fd) {
-	struct file* filp = fdtable_getFile(current_task()->fdtable, fd);
+	struct file* filp = fdtable_getFile(current->fdtable, fd);
 	if (!filp) return -EBADF;
 
-	fdtable_closeFd(current_task()->fdtable, fd);
+	fdtable_closeFd(current->fdtable, fd);
 	return file_unref(filp);
 }
 
@@ -681,7 +681,7 @@ int32 do_close(int32 fd) {
  * Kernel-internal implementation of lseek syscall
  */
 off_t do_lseek(int32 fd, off_t offset, int32 whence) {
-	struct file* filp = fdtable_getFile(current_task()->fdtable,fd);
+	struct file* filp = fdtable_getFile(current->fdtable,fd);
 	if (!filp) return -EBADF;
 
 	loff_t pos = file_llseek(filp, offset, whence);

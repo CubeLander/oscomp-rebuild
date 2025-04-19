@@ -55,7 +55,7 @@
 	* Atomic type definitions
 	*/
  typedef struct {
-		 volatile int counter;
+	volatile int counter;
  } atomic_t;
  
  typedef struct {

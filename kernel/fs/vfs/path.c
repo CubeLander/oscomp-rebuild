@@ -16,13 +16,12 @@
  */
 int32 path_create(const char* name, uint32 flags, struct path* path) {
 	int32 error;
-	struct task_struct* current;
 	struct dentry* start_dentry;
 	struct vfsmount* start_mnt;
 
 	/* Get current working directory (simplified) */
-	start_dentry = CURRENT->fs->pwd.dentry;
-	start_mnt = CURRENT->fs->pwd.mnt;
+	start_dentry = current->fs->pwd.dentry;
+	start_mnt = current->fs->pwd.mnt;
 
 	/* Perform the lookup */
 	error = vfs_pathwalk(start_dentry, start_mnt, name, flags, path);
@@ -113,7 +112,7 @@ int32 filename_lookup(int32 dfd, const char* name, uint32 flags, struct path* pa
 			start_mnt = current->fs->pwd.mnt;
 		} else {
 			/* Use the directory referenced by the file descriptor */
-			// struct file* file = get_file(dfd, CURRENT);
+			// struct file* file = get_file(dfd, current);
 			struct file* file = fdtable_getFile(current->fdtable, dfd);
 
 			if (!file) return -EBADF;
@@ -183,12 +182,12 @@ int32 resolve_path_parent(const char* path_str, struct path* out_parent)
     /* Initialize with starting point based on absolute/relative path */
     if (path_str[0] == '/') {
         /* Absolute path - start from root */
-        start_path.dentry = dentry_ref(current_task()->fs->root.dentry);
-        start_path.mnt = mount_ref(current_task()->fs->root.mnt);
+        start_path.dentry = dentry_ref(current->fs->root.dentry);
+        start_path.mnt = mount_ref(current->fs->root.mnt);
     } else {
         /* Relative path - start from cwd */
-        start_path.dentry = dentry_ref(current_task()->fs->pwd.dentry);
-        start_path.mnt = mount_ref(current_task()->fs->pwd.mnt);
+        start_path.dentry = dentry_ref(current->fs->pwd.dentry);
+        start_path.mnt = mount_ref(current->fs->pwd.mnt);
     }
 
     /* Find the last component in the original string */

@@ -190,28 +190,6 @@ int32 ext4_fill_super(struct superblock* sb, void* data, int32 silent) {
     return 0;
 }
 
-/**
- * ext4_mount - Mount an ext4 filesystem
- * @fs_type: The filesystem type
- * @flags: Mount flags
- * @dev_name: Device name
- * @data: Mount options
- *
- * Returns: The mounted superblock or an error pointer
- */
-// struct superblock* ext4_mount_adapter(struct fstype* fs_type, int32 flags, const char* dev_name, void* data) {
-// 	struct superblock* sb;
-// 	int32 ret;
-
-// 	/* Create a new superblock */
-// 	sb = fstype_mount(fs_type, NULL, ext4_fill_super, flags, data);
-// 	if (PTR_IS_ERROR(sb)) return sb;
-
-// 	/* Set the device name */
-// 	if (dev_name && *dev_name) sb->s_dev_name = kstrdup(dev_name, 0);
-
-// 	return sb;
-// }
 
 /* Filesystem type registration structure */
 struct fstype ext4_fs_type = {

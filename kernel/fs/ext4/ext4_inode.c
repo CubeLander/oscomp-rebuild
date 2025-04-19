@@ -222,12 +222,12 @@ static struct inode *ext4_vfs_lookup(struct inode *dir, struct dentry *dentry, u
     int32 ret;
     
     if (!dir || !dentry)
-        return ERR_PTR(-EINVAL);
+        return ERR_TO_PTR(-EINVAL);
     
     /* Get ext4 inode reference for the directory */
 	ret = ext4_fs_get_inode_ref(e_fs, dir->i_ino, &e_dir_ref);
     if (ret != 0)
-        return ERR_PTR(ret);
+        return ERR_TO_PTR(ret);
     
     /* Call ext4 directory find entry function */
     ret = ext4_dir_find_entry(&result, &e_dir_ref, dentry->d_name->name, 
@@ -240,7 +240,7 @@ static struct inode *ext4_vfs_lookup(struct inode *dir, struct dentry *dentry, u
         /* Entry not found or error occurred */
         if (ret == -ENOENT)
             return NULL; /* Not an error, just not found */
-        return ERR_PTR(ret);
+        return ERR_TO_PTR(ret);
     }
     
     /* Found the entry, now get the inode */

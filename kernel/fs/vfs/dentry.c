@@ -40,10 +40,10 @@ struct dentry* dentry_acquire(struct dentry* parent, const struct qstr* name, in
 	struct dentry* dentry = NULL;
 	bool type_match = true;
 
-	unlikely_if(!parent || !name || !name->name) return ERR_PTR(-EINVAL);
-	unlikely_if(!dentry_isDir(parent)) return ERR_PTR(-ENOTDIR);
+	unlikely_if(!parent || !name || !name->name) return ERR_TO_PTR(-EINVAL);
+	unlikely_if(!dentry_isDir(parent)) return ERR_TO_PTR(-ENOTDIR);
 	struct inode* dir_inode = parent->d_inode;
-	unlikely_if(!dir_inode) return ERR_PTR(-ENOENT);
+	unlikely_if(!dir_inode) return ERR_TO_PTR(-ENOENT);
 
 	/* 确保名称有哈希值 */
 	struct qstr tmp_name = *name;
@@ -158,7 +158,7 @@ static void __dentry_free(struct dentry* dentry) {
 	/* 从inode的别名列表中移除 */
 	if (dentry->d_inode && !list_empty(&dentry->d_inodeListNode)) {
 		spinlock_lock(&dentry->d_inode->i_dentryList_lock);
-		list_del_init(&dentry->d_inodeListNode);
+		list_del(&dentry->d_inodeListNode);
 		spinlock_unlock(&dentry->d_inode->i_dentryList_lock);
 	}
 
@@ -203,7 +203,7 @@ int32 dentry_instantiate(struct dentry* dentry, struct inode* inode) {
 		/* 从inode的别名列表中移除 */
 		if (!list_empty(&dentry->d_inodeListNode)) {
 			spinlock_lock(&dentry->d_inode->i_dentryList_lock);
-			list_del_init(&dentry->d_inodeListNode);
+			list_del(&dentry->d_inodeListNode);
 			spinlock_unlock(&dentry->d_inode->i_dentryList_lock);
 		}
 		inode_unref(dentry->d_inode);
@@ -748,7 +748,7 @@ int32 setattr_prepare(struct dentry* dentry, struct iattr* attr) {
 	/* Check if user can change ownership */
 	if (attr->ia_valid & (ATTR_UID | ATTR_GID)) {
 		/* Only root can change ownership */
-		if (current_task()->euid != 0) return -EPERM;
+		if (current->euid != 0) return -EPERM;
 	}
 
 	/* Check if size can be changed */
@@ -856,34 +856,34 @@ static inline int32 __dentry_hash(struct dentry* dentry) { return hashtable_inse
  *
  * Creates a new directory with the given parent.
  *
- * Returns: New dentry with increased refcount on success, NULL or ERR_PTR on failure
+ * Returns: New dentry with increased refcount on success, NULL or ERR_TO_PTR on failure
  */
 struct dentry* dentry_mkdir(struct dentry* parent, const char* name, fmode_t mode) {
 	struct dentry* dentry;
 	struct qstr qname;
 	int32 error;
 
-	unlikely_if(!parent || !name || !*name) return ERR_PTR(-EINVAL);
-	unlikely_if(!dentry_isDir(parent)) return ERR_PTR(-ENOTDIR);
+	unlikely_if(!parent || !name || !*name) return ERR_TO_PTR(-EINVAL);
+	unlikely_if(!dentry_isDir(parent)) return ERR_TO_PTR(-ENOTDIR);
 
 	struct inode* dir_inode = parent->d_inode;
-	unlikely_if(!dir_inode) return ERR_PTR(-ENOENT);
+	unlikely_if(!dir_inode) return ERR_TO_PTR(-ENOENT);
 
 	error = inode_permission(dir_inode, MAY_WRITE | MAY_EXEC);
-	unlikely_if(error) return ERR_PTR(error);
+	unlikely_if(error) return ERR_TO_PTR(error);
 
-	unlikely_if(!dir_inode->i_op || !dir_inode->i_op->mkdir) return ERR_PTR(-EPERM);
+	unlikely_if(!dir_inode->i_op || !dir_inode->i_op->mkdir) return ERR_TO_PTR(-EPERM);
 
 	/* Allocate new dentry */
 	dentry = dentry_acquireRaw(parent, name, 1, false, true);
-	unlikely_if(!dentry) return ERR_PTR(-ENOMEM);
+	unlikely_if(!dentry) return ERR_TO_PTR(-ENOMEM);
 
 	/* Call filesystem-specific mkdir */
 	error = inode_mkdir(parent->d_inode, dentry, mode);
 	if (error != 0) {
 		/* Failed - clean up the dentry */
 		dentry_unref(dentry);
-		return ERR_PTR(error);
+		return ERR_TO_PTR(error);
 	}
 
 	/* Dentry reference count is already 1 from dentry_acquire */
@@ -905,7 +905,7 @@ struct dentry* dentry_mkdir(struct dentry* parent, const char* name, fmode_t mod
 struct dentry* dentry_acquireRaw(struct dentry* parent, const char* name, int32 is_dir, bool revalidate, bool alloc) {
 	struct qstr qname;
 
-	if (!parent || !name || !*name) return ERR_PTR(-EINVAL);
+	if (!parent || !name || !*name) return ERR_TO_PTR(-EINVAL);
 
 	/* Create qstr from raw name */
 	qname.name = name;
@@ -941,25 +941,25 @@ bool dentry_isEmptyDir(struct dentry* dentry) {
  *
  * Creates a special file (device node, FIFO, socket) in the specified directory.
  *
- * Returns: New dentry on success, ERR_PTR on failure
+ * Returns: New dentry on success, ERR_TO_PTR on failure
  */
 struct dentry* dentry_mknod(struct dentry* parent, const char* name, mode_t mode, dev_t dev) {
 	struct dentry* dentry;
 	int32 error;
 
 	/* Validate parameters */
-	if (!parent || !parent->d_inode || !name || !*name) return ERR_PTR(-EINVAL);
+	if (!parent || !parent->d_inode || !name || !*name) return ERR_TO_PTR(-EINVAL);
 
 	/* Check if parent is a directory */
-	if (!dentry_isDir(parent)) return ERR_PTR(-ENOTDIR);
+	if (!dentry_isDir(parent)) return ERR_TO_PTR(-ENOTDIR);
 
 	/* Check permissions */
 	error = inode_permission(parent->d_inode, MAY_WRITE | MAY_EXEC);
-	if (error) return ERR_PTR(error);
+	if (error) return ERR_TO_PTR(error);
 
 	/* Create a dentry for this name in the parent directory */
 	dentry = dentry_acquireRaw(parent, name, 0, false, true);
-	unlikely_if(!dentry) return ERR_PTR(-ENOMEM);
+	unlikely_if(!dentry) return ERR_TO_PTR(-ENOMEM);
 
 	/* Check if entry already exists */
 	if (dentry->d_inode) {
@@ -976,7 +976,7 @@ struct dentry* dentry_mknod(struct dentry* parent, const char* name, mode_t mode
 
 out:
 	dentry_unref(dentry);
-	return ERR_PTR(error);
+	return ERR_TO_PTR(error);
 }
 
 /**

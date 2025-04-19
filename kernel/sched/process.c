@@ -86,7 +86,7 @@ ssize_t do_wait(int32 pid) {
 
 				struct task_struct* p = procs[i];
 				// kprintf("p = 0x%lx,\n",p);
-				if (p->parent != NULL && p->parent->pid == CURRENT->pid && p->state & TASK_DEAD) {
+				if (p->parent != NULL && p->parent->pid == current->pid && p->state & TASK_DEAD) {
 					// kprintf("DEBUG LINE\n");
 
 					free_process(p);
@@ -94,7 +94,7 @@ ssize_t do_wait(int32 pid) {
 				}
 			}
 			// kprintf("current->sem_index = %d\n",current->sem_index);
-			//sem_P(CURRENT->sem_index);
+			//sem_P(current->sem_index);
 			// kprintf("wait:return from blocking!\n");
 		}
 	}
@@ -102,7 +102,7 @@ ssize_t do_wait(int32 pid) {
 		// kprintf("DEBUG LINE\n");
 
 		struct task_struct* p = procs[pid];
-		if (p->parent != CURRENT) {
+		if (p->parent != current) {
 			return -1;
 		} else if (p->state & TASK_DEAD) {
 			free_process(p);
@@ -178,7 +178,7 @@ void print_proc_memory_layout(struct task_struct* proc) {
  * Returns true if the current task belongs to the specified group.
  */
 int32 current_is_in_group(gid_t gid) {
-	struct task_struct* task = current_task();
+	struct task_struct* task = current;
 
 	/* Check primary group */
 	if (task->egid == gid) return 1;

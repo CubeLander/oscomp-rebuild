@@ -72,18 +72,9 @@ static inline void __list_del(struct list_head *prev, struct list_head *next) {
 /*
  * 从链表中删除节点，并重置节点的指针
  */
-static inline void list_del_init(struct list_head *entry) {
-  __list_del(entry->prev, entry->next);
-  INIT_LIST_HEAD(entry);
-}
-
-/*
- * 从链表中删除节点
- */
 static inline void list_del(struct list_head *entry) {
   __list_del(entry->prev, entry->next);
-  entry->next = NULL;
-  entry->prev = NULL;
+  INIT_LIST_HEAD(entry);
 }
 
 /*
@@ -200,25 +191,26 @@ static inline void list_splice_init(struct list_head *list,
        pos = n, n = container_of(n->member.next, typeof(*n), member))
 
 /*
- * 获取链表第一个节点的包含结构体
- */
-#define list_first_entry(ptr, type, member)                                    \
-  container_of((ptr)->next, type, member)
-
-/*
- * 获取链表最后一个节点的包含结构体
- */
-#define list_last_entry(ptr, type, member)                                     \
-  container_of((ptr)->prev, type, member)
-
-/*
  * 获取链表第一个节点的包含结构体，如果链表为空则返回NULL
  */
-#define list_first_entry_or_null(ptr, type, member)                            \
+#define list_first_entry(ptr, type, member)                            \
   ({                                                                           \
     struct list_head *head__ = (ptr);                                          \
     struct list_head *pos__ = head__->next;                                    \
     pos__ != head__ ? container_of(pos__, type, member) : NULL;                \
   })
+
+/*
+ * 获取链表第一个节点的包含结构体，如果链表为空则返回NULL
+ */
+#define list_last_entry(ptr, type, member)                            \
+  ({                                                                           \
+    struct list_head *head__ = (ptr);                                          \
+    struct list_head *pos__ = head__->prev;                                    \
+    pos__ != head__ ? container_of(pos__, type, member) : NULL;                \
+  })
+
+
+
 
 #endif /* _KERNEL_LIST_H */

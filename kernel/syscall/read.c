@@ -25,7 +25,7 @@ int64 sys_read(int32 fd, void* buf, size_t count) {
  * Kernel-internal implementation of read syscall
  */
 int64 do_read(int32 fd, void* buf, size_t count) {
-	struct file* filp = fdtable_getFile(current_task()->fdtable,fd);
+	struct file* filp = fdtable_getFile(current->fdtable,fd);
 	if (!filp) return -EBADF;
 
 	ssize_t ret = file_read(filp, buf, count, &filp->f_pos);

@@ -13,7 +13,7 @@
 struct fs_struct* fs_struct_create(void) {
 
 	struct fs_struct* fs = kmalloc(sizeof(struct fs_struct));
-	if (!fs) return ERR_PTR(-ENOMEM);
+	if (!fs) return ERR_TO_PTR(-ENOMEM);
 
 	/* Initialize locks and reference count */
 	spinlock_init(&fs->lock);

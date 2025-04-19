@@ -125,8 +125,8 @@ struct task_struct {
 	struct list_head children;
 	struct list_head sibling;
 	// ready queue
-	struct list_head ready_queue_node;
-
+	struct list_node ready_queue_node;
+	struct list_node wait_queue_node;
 	// accounting. added @lab3_3
 	int32 tick_count;
 
@@ -173,12 +173,12 @@ static inline int current_group_matches(gid_t gid) {
     int i;
     
     // /* Check primary group */
-    // if (current_task()->gid == gid)
+    // if (current->gid == gid)
     //     return 1;
         
     // /* Check supplementary groups */
-    // for (i = 0; i < current_task()->ngroups; i++) {
-    //     if (current_task()->groups[i] == gid)
+    // for (i = 0; i < current->ngroups; i++) {
+    //     if (current->groups[i] == gid)
     //         return 1;
     // }
     

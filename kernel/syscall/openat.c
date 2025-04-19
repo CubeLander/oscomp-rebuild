@@ -76,7 +76,7 @@ int32 do_openat(int32 dirfd, const char* pathname, int32 flags, mode_t mode) {
 #endif
 
 	/* Allocate a file descriptor */
-	int32 fd = fdtable_allocFd(current_task()->fdtable, 0);
+	int32 fd = fdtable_allocFd(current->fdtable, 0);
 #ifdef DO_OPENAT_DEBUG
 
 	kprintf("do_openat: fdtable_allocFd done\n");
@@ -89,7 +89,7 @@ int32 do_openat(int32 dirfd, const char* pathname, int32 flags, mode_t mode) {
 	}
 
 	/* Install the file in the fd table */
-	fdtable_installFd(current_task()->fdtable, fd, filp);
+	fdtable_installFd(current->fdtable, fd, filp);
 #ifdef DO_OPENAT_DEBUG
 
 	kprintf("do_openat: fdtable_installFd done\n");

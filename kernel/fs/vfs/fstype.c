@@ -49,7 +49,7 @@ struct superblock* fstype_mount(struct fstype* type, int32 flags, dev_t dev_id,c
 	} else {
 		/* Fall back to generic allocation and initialization */
 		sb = __fstype_allocSuperblock(type);
-		CHECK_PTR_VALID(sb, ERR_PTR(-ENOMEM));
+		CHECK_PTR_VALID(sb, ERR_TO_PTR(-ENOMEM));
 	}
 
 	/* Set device ID */

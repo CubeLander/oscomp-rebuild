@@ -31,13 +31,13 @@ struct hashtable inode_hashtable;
 // 	int32 res = 0;
 
 // 	/* Root can do anything */
-// 	if (current_task()->euid == 0) return 0;
+// 	if (current->euid == 0) return 0;
 
 // 	/* Nobody gets write access to a read-only filesystem */
 // 	if ((mask & MAY_WRITE) && inode_isReadonly(inode)) return -EROFS;
 
 // 	/* Check if file is accessible by the user */
-// 	if (current_task()->euid == inode->i_uid) {
+// 	if (current->euid == inode->i_uid) {
 // 		mode >>= 6; /* Use the user permissions */
 // 	} else if (current_is_in_group(inode->i_gid)) {
 // 		mode >>= 3; /* Use the group permissions */
@@ -91,14 +91,14 @@ int32 inode_checkPermission(struct inode* inode, int32 mask) {
  * Returns the inode or NULL if an error occurs.
  */
 struct inode* inode_acquire(struct superblock* sb, uint64 ino) {
-	CHECK_PTR_VALID(sb, ERR_PTR(-EINVAL));
+	CHECK_PTR_VALID(sb, ERR_TO_PTR(-EINVAL));
 
 	struct inode* inode = icache_lookup(sb, ino);
-	CHECK_PTR_ERROR(inode, ERR_PTR(-ENOMEM));
+	CHECK_PTR_ERROR(inode, ERR_TO_PTR(-ENOMEM));
 
 	if (!inode) {
 		inode = superblock_createInode(sb);
-		CHECK_PTR_VALID(inode, ERR_PTR(-ENOMEM));
+		CHECK_PTR_VALID(inode, ERR_TO_PTR(-ENOMEM));
 	}
 
 	if (inode->i_state & I_NEW) {
@@ -108,7 +108,7 @@ struct inode* inode_acquire(struct superblock* sb, uint64 ino) {
 			// inode 初始化完成后的解锁动作由具体文件系统负责
 		} else {
 			kprintf("No read_inode method for superblock\n");
-			return ERR_PTR(-EINVAL);
+			return ERR_TO_PTR(-EINVAL);
 		}
 	}
 	icache_insert(inode);
@@ -151,7 +151,7 @@ void inode_unref(struct inode* inode) {
 			/* If it's on another state list, remove it first */
 			spinlock_lock(&sb->s_list_inode_states_lock);
 			if (!list_empty(&inode->i_state_list_node)) {
-				list_del_init(&inode->i_state_list_node);
+				list_del(&inode->i_state_list_node);
 			}
 
 			list_add_tail(&inode->i_state_list_node, &sb->s_list_clean_inodes);
@@ -179,7 +179,7 @@ void inode_setDirty(struct inode* inode) {
 		spinlock_lock(&inode->i_lock);
 
 		if (likely(!list_empty(&inode->i_state_list_node))) {
-			list_del_init(&inode->i_state_list_node);
+			list_del(&inode->i_state_list_node);
 		}
 
 		inode->i_state |= I_DIRTY;
@@ -235,8 +235,8 @@ void __inode__free(struct inode* inode) {
 	/* Remove from superblock lists */
 	if (inode->i_superblock) {
 		spinlock_lock(&inode->i_superblock->s_list_all_inodes_lock);
-		list_del_init(&inode->i_s_list_node);
-		list_del_init(&inode->i_state_list_node);
+		list_del(&inode->i_s_list_node);
+		list_del(&inode->i_state_list_node);
 		spinlock_unlock(&inode->i_superblock->s_list_all_inodes_lock);
 	}
 
@@ -318,7 +318,7 @@ int32 inode_sync(struct inode* inode, int32 wait) {
 		spinlock_lock(&inode->i_superblock->s_list_inode_states_lock);
 		/* Remove from dirty list */
 		if (inode->i_state & I_DIRTY) {
-			list_del_init(&inode->i_state_list_node);
+			list_del(&inode->i_state_list_node);
 			inode->i_state &= ~I_DIRTY;
 			list_add(&inode->i_state_list_node, &inode->i_superblock->s_list_clean_inodes);
 		}
@@ -399,8 +399,8 @@ int32 inode_mkdir(struct inode* dir, struct dentry* dentry, mode_t mode) {
 
 	/* Set up basic directory attributes */
 	inode->i_mode = S_IFDIR | (mode & 0777);
-	inode->i_uid = current_task()->uid;
-	inode->i_gid = current_task()->gid;
+	inode->i_uid = current->uid;
+	inode->i_gid = current->gid;
 	inode->i_size = 0;
 	inode->i_blocks = 0;
 	inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(dir->i_superblock);
@@ -452,8 +452,8 @@ int32 inode_mknod(struct inode* dir, struct dentry* dentry, mode_t mode, dev_t d
 	// TODO: 做一个通用的inode_init方法。
 	// /* Set up basic inode attributes */
 	// inode->i_mode = mode;
-	// inode->i_uid = current_task()->uid;
-	// inode->i_gid = current_task()->gid;
+	// inode->i_uid = current->uid;
+	// inode->i_gid = current->gid;
 	// inode->i_size = 0;
 	// inode->i_blocks = 0;
 	// inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(dir->i_superblock);
@@ -506,7 +506,7 @@ int32 inode_permission(struct inode* inode, int32 mask) {
 	if (!inode) return -EINVAL;
 
 	/* Root can do (almost) anything */
-	if (current_task()->euid == 0) {
+	if (current->euid == 0) {
 		/* Even root has some restrictions */
 		if ((mask & MAY_WRITE) && inode_isImmutable(inode)) return -EPERM;
 		return 0;
@@ -526,7 +526,7 @@ int32 inode_permission(struct inode* inode, int32 mask) {
 	if ((mask & MAY_WRITE) && inode_isReadonly(inode)) return -EROFS;
 
 	/* Check standard Unix permissions */
-	if (current_task()->euid == inode->i_uid) {
+	if (current->euid == inode->i_uid) {
 		/* Owner permissions */
 		mode >>= 6;
 	} else if (current_group_matches(inode->i_gid)) {
@@ -602,13 +602,13 @@ int32 generic_permission(struct inode* inode, int32 mask) {
 	int32 res = 0;
 
 	/* Root can do anything */
-	if (current_task()->euid == 0) return 0;
+	if (current->euid == 0) return 0;
 
 	/* Nobody gets write access to a read-only filesystem */
 	if ((mask & MAY_WRITE) && inode_isReadonly(inode)) return -EROFS;
 
 	/* Check if file is accessible by the user */
-	if (current_task()->euid == inode->i_uid) {
+	if (current->euid == inode->i_uid) {
 		mode >>= 6; /* Use the user permissions */
 	} else if (current_group_matches(inode->i_gid)) {
 		mode >>= 3; /* Use the group permissions */
@@ -632,10 +632,10 @@ bool inode_isDir(struct inode* inode) {
 }
 
 struct dentry* inode_lookup(struct inode* dir, struct dentry* dentry, uint32 lookup_flags) {
-	if (!dir || !dentry) return ERR_PTR(-EINVAL);
-	if (!inode_isDir(dir)) return ERR_PTR(-ENOTDIR);
+	if (!dir || !dentry) return ERR_TO_PTR(-EINVAL);
+	if (!inode_isDir(dir)) return ERR_TO_PTR(-ENOTDIR);
 	if (dir->i_op && dir->i_op->lookup) {
 		return dir->i_op->lookup(dir, dentry, lookup_flags);
 	}
-	return ERR_PTR(-ENOSYS);
+	return ERR_TO_PTR(-ENOSYS);
 }
