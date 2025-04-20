@@ -15,4 +15,4 @@ sed -i 's/.*CONFIG_SHA256_HWACCEL.*/# CONFIG_SHA256_HWACCEL is not set/' .config
 # Build BusyBox
 make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- clean
 make ARCH=riscv  CROSS_COMPILE=riscv64-linux-gnu- -j$(nproc)
-make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- CONFIG_PREFIX=/root/workspace/oscomp-release/hostfs install
+make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- CONFIG_PREFIX=../../build/hostfs install

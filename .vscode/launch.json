@@ -32,7 +32,7 @@
                 },
                 {
                     "description": "Load OpenSBI symbols",
-                    "text": "add-symbol-file /root/workspace/oscomp-dev/vendor/opensbi/build/platform/generic/firmware/fw_jump.elf 0x80000000",
+                    "text": "add-symbol-file ${workspaceFolder}/vendor/opensbi/build/platform/generic/firmware/fw_jump.elf 0x80000000",
                     "ignoreFailures": false
                 },
                 {

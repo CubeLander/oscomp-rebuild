@@ -1,10 +1,9 @@
 #include <kernel/device/blockdevice.h>
+#include <kernel/device/buffer_head.h>
 #include <kernel/mm/kmalloc.h>
 #include <kernel/types.h>
 #include <kernel/util.h>
-#include <kernel/types.h>
 #include <kernel/util/print.h>
-#include <kernel/device/buffer_head.h>
 
 /* Global block device list */
 struct list_head block_device_list;
@@ -13,41 +12,39 @@ spinlock_t block_device_list_lock;
 /* Major number mapping table */
 #define MAX_MAJOR 256
 #define DYNAMIC_MAJOR_MIN 128
-static struct block_operations *blk_majors[MAX_MAJOR];
+static struct block_operations* blk_majors[MAX_MAJOR];
 static spinlock_t major_lock;
-static char *major_names[MAX_MAJOR];
+static char* major_names[MAX_MAJOR];
 
 /**
  * alloc_block_device - Allocate a new block device structure
  *
  * Returns: Newly allocated block device or NULL
  */
-struct blockdevice *alloc_block_device(void) {
-    struct blockdevice *bdev = kmalloc(sizeof(struct blockdevice));
-    if (!bdev)
-        return NULL;
-    
-    memset(bdev, 0, sizeof(struct blockdevice));
-    atomic_set(&bdev->bd_refcnt, 1);  /* Initial reference count */
-    spinlock_init(&bdev->bd_lock);
-    INIT_LIST_HEAD(&bdev->bd_list);
-    
-    return bdev;
+struct blockdevice* alloc_block_device(void) {
+	struct blockdevice* bdev = kmalloc(sizeof(struct blockdevice));
+	if (!bdev) return NULL;
+
+	memset(bdev, 0, sizeof(struct blockdevice));
+	atomic_set(&bdev->bd_refcnt, 1); /* Initial reference count */
+	spinlock_init(&bdev->bd_lock);
+	INIT_LIST_HEAD(&bdev->bd_list);
+
+	return bdev;
 }
 
 /**
- * free_block_device - Free block device structure 
+ * free_block_device - Free block device structure
  * @bdev: Block device to free
  */
-void free_block_device(struct blockdevice *bdev) {
-    if (!bdev)
-        return;
-    
-    if (atomic_read(&bdev->bd_refcnt) > 0) {
-        kprintf("Warning: freeing block device with active references\n");
-    }
-    
-    kfree(bdev);
+void free_block_device(struct blockdevice* bdev) {
+	if (!bdev) return;
+
+	if (atomic_read(&bdev->bd_refcnt) > 0) {
+		kprintf("Warning: freeing block device with active references\n");
+	}
+
+	kfree(bdev);
 }
 
 /**
@@ -56,23 +53,23 @@ void free_block_device(struct blockdevice *bdev) {
  *
  * This function finds the block device by device number and
  * increases its reference count, but does not open it.
- * 
+ *
  * Returns: Block device pointer or NULL if not found
  */
-struct blockdevice *blockdevice_lookup(dev_t dev) {
-    struct blockdevice *bdev = NULL;
-    
-    spinlock_lock(&block_device_list_lock);
-    list_for_each_entry(bdev, &block_device_list, bd_list) {
-        if (bdev->bd_dev == dev) {
-            atomic_inc(&bdev->bd_refcnt);
-            spinlock_unlock(&block_device_list_lock);
-            return bdev;
-        }
-    }
-    spinlock_unlock(&block_device_list_lock);
-    
-    return NULL;
+struct blockdevice* blockdevice_lookup(dev_t dev) {
+	struct blockdevice* bdev = NULL;
+
+	spinlock_lock(&block_device_list_lock);
+	list_for_each_entry(bdev, &block_device_list, bd_list) {
+		if (bdev->bd_dev == dev) {
+			atomic_inc(&bdev->bd_refcnt);
+			spinlock_unlock(&block_device_list_lock);
+			return bdev;
+		}
+	}
+	spinlock_unlock(&block_device_list_lock);
+
+	return NULL;
 }
 
 /**
@@ -81,18 +78,17 @@ struct blockdevice *blockdevice_lookup(dev_t dev) {
  *
  * Decreases reference count and frees the structure when it reaches zero
  */
-void blockdevice_unref(struct blockdevice *bdev) {
-    if (!bdev)
-        return;
-    
-    if (atomic_dec_and_test(&bdev->bd_refcnt)) {
-        /* Last reference - remove from list and free */
-        spinlock_lock(&block_device_list_lock);
-        list_del(&bdev->bd_list);
-        spinlock_unlock(&block_device_list_lock);
-        
-        free_block_device(bdev);
-    }
+void blockdevice_unref(struct blockdevice* bdev) {
+	if (!bdev) return;
+
+	if (atomic_dec_and_test(&bdev->bd_refcnt)) {
+		/* Last reference - remove from list and free */
+		spinlock_lock(&block_device_list_lock);
+		list_del(&bdev->bd_list);
+		spinlock_unlock(&block_device_list_lock);
+
+		free_block_device(bdev);
+	}
 }
 
 /**
@@ -101,30 +97,28 @@ void blockdevice_unref(struct blockdevice *bdev) {
  * @mode: File mode flags (O_RDONLY, O_WRONLY, etc.)
  *
  * This opens the block device for use, calling its open method if available.
- * 
+ *
  * Returns: 0 on success, error code on failure
  */
-int32 blockdevice_open(struct blockdevice *bdev, fmode_t mode) {
-    int32 res = 0;
-    uint32 access_mode = mode & O_ACCMODE;
-    
-    if (!bdev)
-        return -EINVAL;
-    
-    spinlock_lock(&bdev->bd_lock);
-    
-    /* Call device open method if available */
-    if (bdev->bd_ops && bdev->bd_ops->open)
-        res = bdev->bd_ops->open(bdev, access_mode);
-    
-    if (res == 0) {
-        /* Track open mode and opener count */
-        bdev->bd_mode |= access_mode;
-        bdev->bd_openers++;
-    }
-    
-    spinlock_unlock(&bdev->bd_lock);
-    return res;
+int32 blockdevice_open(struct blockdevice* bdev, fmode_t mode) {
+	int32 res = 0;
+	uint32 access_mode = mode & O_ACCMODE;
+
+	if (!bdev) return -EINVAL;
+
+	spinlock_lock(&bdev->bd_lock);
+
+	/* Call device open method if available */
+	if (bdev->bd_ops && bdev->bd_ops->open) res = bdev->bd_ops->open(bdev, access_mode);
+
+	if (res == 0) {
+		/* Track open mode and opener count */
+		bdev->bd_mode |= access_mode;
+		bdev->bd_openers++;
+	}
+
+	spinlock_unlock(&bdev->bd_lock);
+	return res;
 }
 
 /**
@@ -133,29 +127,43 @@ int32 blockdevice_open(struct blockdevice *bdev, fmode_t mode) {
  *
  * This closes the block device, calling its release method if needed.
  */
-void blockdevice_close(struct blockdevice *bdev) {
-    if (!bdev)
-        return;
-    
-    spinlock_lock(&bdev->bd_lock);
-    
-    /* Only call release when all openers are gone */
-    if (bdev->bd_openers > 0) {
-        bdev->bd_openers--;
-        
-        if (bdev->bd_openers == 0) {
-            /* Last opener - call release */
-            if (bdev->bd_ops && bdev->bd_ops->release) {
-                /* Call outside of lock */
-                spinlock_unlock(&bdev->bd_lock);
-                bdev->bd_ops->release(bdev);
-                spinlock_lock(&bdev->bd_lock);
-            }
-            
-            /* Clear mode flags */
-            bdev->bd_mode = 0;
-        }
-    }
-    
-    spinlock_unlock(&bdev->bd_lock);
+void blockdevice_close(struct blockdevice* bdev) {
+	if (!bdev) return;
+
+	spinlock_lock(&bdev->bd_lock);
+
+	/* Only call release when all openers are gone */
+	if (bdev->bd_openers > 0) {
+		bdev->bd_openers--;
+
+		if (bdev->bd_openers == 0) {
+			/* Last opener - call release */
+			if (bdev->bd_ops && bdev->bd_ops->release) {
+				/* Call outside of lock */
+				spinlock_unlock(&bdev->bd_lock);
+				bdev->bd_ops->release(bdev);
+				spinlock_lock(&bdev->bd_lock);
+			}
+
+			/* Clear mode flags */
+			bdev->bd_mode = 0;
+		}
+	}
+
+	spinlock_unlock(&bdev->bd_lock);
+}
+
+void blockDeviceManager_init(void) {
+
+	/* Initialize the block device list */
+	INIT_LIST_HEAD(&block_device_list);
+	/* Initialize the block device list lock */
+	spinlock_init(&block_device_list_lock);
+	/* Initialize the major number lock */
+	spinlock_init(&major_lock);
+
+	/* Initialize the major names array */
+	for (int i = 0; i < MAX_MAJOR; i++) {
+		major_names[i] = NULL;
+	}
 }

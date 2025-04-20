@@ -20,85 +20,93 @@ trap_sec_start:
 .globl smode_trap_vector
 .align 4
 smode_trap_vector:
-    # 首先保存关键CSR到一些临时寄存器
-    csrr     s1, sepc    # 保存sepc到s1
-    csrr     s2, scause  # 保存scause到s2
-    csrr     s3, stval   # 保存stval到s3
-    csrr     s4, sstatus # 保存sstatus到s4
-    
-    # csrrw    a0, sscratch, a0
+        # make room to save registers.
+        addi sp, sp, -256
+
+        # save the registers.
+        sd ra, 0(sp)
+        sd sp, 8(sp)
+        sd gp, 16(sp)
+        sd tp, 24(sp)
+        sd t0, 32(sp)
+        sd t1, 40(sp)
+        sd t2, 48(sp)
+        sd s0, 56(sp)
+        sd s1, 64(sp)
+        sd a0, 72(sp)
+        sd a1, 80(sp)
+        sd a2, 88(sp)
+        sd a3, 96(sp)
+        sd a4, 104(sp)
+        sd a5, 112(sp)
+        sd a6, 120(sp)
+        sd a7, 128(sp)
+        sd s2, 136(sp)
+        sd s3, 144(sp)
+        sd s4, 152(sp)
+        sd s5, 160(sp)
+        sd s6, 168(sp)
+        sd s7, 176(sp)
+        sd s8, 184(sp)
+        sd s9, 192(sp)
+        sd s10, 200(sp)
+        sd s11, 208(sp)
+        sd t3, 216(sp)
+        sd t4, 224(sp)
+        sd t5, 232(sp)
+        sd t6, 240(sp)
+
+        # call the C trap handler in trap.c
+        call kerneltrap
+
+        # restore registers.
+        ld ra, 0(sp)
+        ld sp, 8(sp)
+        ld gp, 16(sp)
+        # not tp (contains hartid), in case we moved CPUs
+        ld t0, 32(sp)
+        ld t1, 40(sp)
+        ld t2, 48(sp)
+        ld s0, 56(sp)
+        ld s1, 64(sp)
+        ld a0, 72(sp)
+        ld a1, 80(sp)
+        ld a2, 88(sp)
+        ld a3, 96(sp)
+        ld a4, 104(sp)
+        ld a5, 112(sp)
+        ld a6, 120(sp)
+        ld a7, 128(sp)
+        ld s2, 136(sp)
+        ld s3, 144(sp)
+        ld s4, 152(sp)
+        ld s5, 160(sp)
+        ld s6, 168(sp)
+        ld s7, 176(sp)
+        ld s8, 184(sp)
+        ld s9, 192(sp)
+        ld s10, 200(sp)
+        ld s11, 208(sp)
+        ld t3, 216(sp)
+        ld t4, 224(sp)
+        ld t5, 232(sp)
+        ld t6, 240(sp)
+
+        addi sp, sp, 256
+
+        # return to whatever we were doing in the kernel.
+        sret
 
 
-		# sscratch临时保存了用户中断上下文在内核中的位置。
-    # swap a0 and sscratch, so that points a0 to the trapframe of current process
-    csrrw a0, sscratch, a0
 
-
-    # 检查 t6(a0) 是否在有效地址范围内
-    li        t0, KERN_BASE         # 假设这是内核地址空间的下界
-    bltu      a0, t0, stack_error    # 如果 a0 < 下界，跳转到错误处理
-    # li        t0, 0x88000000         # 假设这是内核地址空间的上界
-    # bgeu      a0, t0, stack_error    # 如果 a0 >= 上界，跳转到错误处理
-		# t0-t6都是临时寄存器，操作系统或应用程序都不需要保护其中的内容。
-    # 这个t6寄存器在用户程序中用不上，所以可以用来做汇编的临时变量，作为保存所有寄存器的内存地址。
-    addi t6, a0 , 0
-
-    # store_all_registers is a macro defined in util/load_store.S, it stores contents
-    # of all general purpose registers into a piece of memory started from [t6].
-    sd ra, 0(t6)
-    sd sp, 8(t6)
-    sd gp, 16(t6)
-    sd tp, 24(t6)
-    sd t0, 32(t6)
-    sd t1, 40(t6)
-    sd t2, 48(t6)
-    sd s0, 56(t6)
-    sd s1, 64(t6)
-    sd a0, 72(t6)
-    sd a1, 80(t6)
-    sd a2, 88(t6)
-    sd a3, 96(t6)
-    sd a4, 104(t6)
-    sd a5, 112(t6)
-    sd a6, 120(t6)
-    sd a7, 128(t6)
-    sd s2, 136(t6)
-    sd s3, 144(t6)
-    sd s4, 152(t6)
-    sd s5, 160(t6)
-    sd s6, 168(t6)
-    sd s7, 176(t6)
-    sd s8, 184(t6)
-    sd s9, 192(t6)
-    sd s10, 200(t6)
-    sd s11, 208(t6)
-    sd t3, 216(t6)
-    sd t4, 224(t6)
-    sd t5, 232(t6)
-    sd t6, 240(t6)
-
-    # come back to save a0 register before entering trap handling in trapframe
-    # [t0]=[sscratch]
-    csrr t0, sscratch
-    sd t0, 72(a0)
-
-    # use the "user kernel" stack (whose pointer stored in p->trapframe->kernel_sp)
-    ld sp, 248(a0)
-
-    # load the address of smode_trap_handler() from p->trapframe->kernel_trap
-    ld t0, 256(a0)
-
-    # restore kernel page table from p->trapframe->kernel_satp. added @lab2_1
-    # ld t1, 272(a0)
-    # csrw satp, t1
-    # sfence.vma zero, zero
-
-	call smode_trap_handler
     # jump to smode_trap_handler() that is defined in kernel/trap.c
     # call t0
 jump_to_handler:
     li      s11, 0               # 重置计数器
     j       smode_trap_handler   # 直接跳转到中断处理程序
+
+
+
 #
 # return from Supervisor mode to User mode, transition is made by using a trapframe,
 # which stores the context of a user application.

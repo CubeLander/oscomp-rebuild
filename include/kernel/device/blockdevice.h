@@ -83,7 +83,7 @@ void blockdevice_close(struct blockdevice* bdev);
 int32 sync_dirty_buffers(struct blockdevice* bdev);
 
 /* Block layer initialization */
-void block_dev_init(void);
+void blockDeviceManager_init(void);
 
 
 

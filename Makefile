@@ -57,30 +57,34 @@ branch:
 
 # 运行 QEMU
 run: 
+	mkdir -p build/qemu
 	qemu-system-riscv64 \
-  -machine virt \
-  -nographic \
-  -m 1G \
-  -bios default \
-  -kernel build/bin/kernel.elf \
-  -drive file=build/disk_img/rootfs.img,format=raw,id=hd0 \
-  -device virtio-blk-device,drive=hd0
+ 	-machine virt \
+ 	-m 2G \
+ 	-nographic \
+  	-bios default \
+  	-kernel build/bin/kernel.elf \
+  	-drive file=build/disk_img/rootfs.img,format=raw,id=hd0 \
+  	-device virtio-blk-device,drive=hd0,bus=virtio-mmio-bus.0 \
+	-D build/qemu/qemu.log 
 
 # GDB 调试服务器
 gdb:
+	mkdir -p build/qemu
 	qemu-system-riscv64 \
-  -machine virt \
-  -m 2G \
-  -nographic \
-  -bios default \
-  -kernel build/bin/kernel.elf \
-  -drive file=build/disk_img/rootfs.img,format=raw,id=hd0 \
-  -device virtio-blk-device,drive=hd0 \
-  -s -S
+ 	-machine virt \
+ 	-m 2G \
+ 	-nographic \
+  	-bios default \
+  	-kernel build/bin/kernel.elf \
+  	-drive file=build/disk_img/rootfs.img,format=raw,id=hd0 \
+  	-device virtio-blk-device,drive=hd0,bus=virtio-mmio-bus.0 \
+	-D build/qemu/qemu.log \
+  	-s -S
 
 # GDB 客户端
 gdbc:
-	gdb-multiarch -x script/gdbinit.txt build/bin/kernel.elf -q
+	gdb-multiarch -x gdbinit.txt build/bin/kernel.elf -q
 
 # 清理构建
 clean:

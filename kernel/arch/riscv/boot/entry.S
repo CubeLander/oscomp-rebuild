@@ -24,7 +24,9 @@ _entry:
     add t0, t0, t0  # 每CPU两页(保护页+栈页)
     mul t0, t0, a0
     add sp, sp, t0
-    
+
+    addi tp, a0, 0 # tp = CPU ID
+	csrw satp, 0
     # 此时sp指向栈页的末尾
     
     # 接下来跳转到s_start

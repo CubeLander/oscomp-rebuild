@@ -1,33 +1,33 @@
 #include <kernel.h>
-#include <kernel/fs/ext4_adaptor.h>
 #include <kernel/device/buffer_head.h>
 #include <kernel/drivers/virtio_device.h>
+#include <kernel/fs/ext4_adaptor.h>
 
-
-int32 do_root_mount(const char* source, const char* target, const char* fstype_name, uint64 flags, const void* data){
+int32 do_root_mount(const char* source, const char* target, const char* fstype_name, uint64 flags, const void* data) {
+	target;
 	int ret = 0;
-    struct ext4_blockdev *e_blockdevice = ext4_blockdev_create_adapter(&virtio_bd);
+	struct ext4_blockdev* e_blockdevice = ext4_blockdev_create_adapter(&virtio_bd);
 	CHECK_PTR_VALID(e_blockdevice, PTR_TO_ERR(e_blockdevice));
 	ret = ext4_device_register(e_blockdevice, "virtio");
-	if(ret != EOK){
+	if (ret != EOK) {
 		kprintf("ext4_device_register failed: %d\n", ret);
-        kfree(e_blockdevice);
+		kfree(e_blockdevice);
 		return ret;
 	}
-    /* ext4 */
-    kprintf("do_root_mount: checking  EXT4\n");
-    struct buffer_head* bh = buffer_alloc(&virtio_bd, 2); /* magic number is at offset 0x438 */
-    if (!(bh->b_data[56] == 0x53 && bh->b_data[57] == 0xEF)) {
-        buffer_free(bh);
+	/* ext4 */
+	kprintf("do_root_mount: checking  EXT4\n");
+	char block2_buffer[512];
+	virtio_bd.bd_ops->read_blocks(&virtio_bd, block2_buffer, 2, 1);
+	if (!(block2_buffer[56] == 0x53 && block2_buffer[57] == 0xEF)) {
 		return -ENOSYS; /* can't get filesystem type */
-    }
+	}
+	for (int i = 0; i < 512; i += 8) {
+		if(i % 64 == 0) kprintf("\n");
+		kprintf("%x ", block2_buffer[i]);
+	}
 	kprintf("do_root_mount: yes it's ext4\n");
 	return ext4_adapter_mount(&ext4_fs_type, flags, data);
-
-
-
 }
-
 
 /**
  * do_mount - 挂载文件系统到指定挂载点
@@ -49,7 +49,7 @@ int32 do_mount(const char* source, const char* target, const char* fstype_name, 
 	struct fstype* type;
 	struct vfsmount* newmnt;
 	int32 ret;
-	if(root_mount_flag){
+	if (root_mount_flag) {
 		root_mount_flag = 0;
 		return do_root_mount(source, target, fstype_name, flags, data);
 	}

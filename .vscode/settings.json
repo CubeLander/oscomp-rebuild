@@ -8,6 +8,8 @@
 		"list.h": "c",
 		"mmu.h": "c",
 		"blockdevice.h": "c",
-		"buffer_head.h": "c"
+		"buffer_head.h": "c",
+		"virtio_device.h": "c",
+		"virtio_mmio.h": "c"
 	}
 }

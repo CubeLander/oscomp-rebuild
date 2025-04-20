@@ -24,8 +24,11 @@ void init_virtio_bd(void) {
 	list_add(&virtio_bd.bd_list, &block_device_list);
 	virtio_bd.bd_block_size = 512; // virtio disk的块大小
 	virtio_bd.bd_nr_blocks = 0;    // 这个值在挂载时设置
+	virtio_bd.bd_ops = &virtio_ops;
 	atomic_set(&virtio_bd.bd_refcnt, 1);
 	spinlock_init(&virtio_bd.bd_lock);
+	virtio_disk_init();
+	virtio_bd.bd_private = NULL; // 这个值在挂载时设置
 	kprintf("init_virtio_bd: end\n");
 }
 

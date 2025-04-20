@@ -1,6 +1,7 @@
 #ifndef _MEMLAYOUT_H
 #define _MEMLAYOUT_H
 #include <kernel/param.h>
+#define QEMU
 //#include <kernel/riscv.h>
 /**
  * FarmOS 的虚拟内存布局：
