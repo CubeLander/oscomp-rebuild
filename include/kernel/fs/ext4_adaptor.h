@@ -36,23 +36,19 @@ void ext4_timestamp_to_timespec64(uint32_t timestamp, struct timespec* ts);
 uint32_t timespec64_to_ext4_timestamp(struct timespec* ts);
 void make_fsid_from_uuid(const uint8_t uuid[16], fsid_t *fsid);
 
-
-/*global ext4 superblock lock*/
-extern spinlock_t ext4_spinlock;
-static inline void ext4_lock(void) { spinlock_lock(&ext4_spinlock); }
-static inline void ext4_unlock(void) { spinlock_unlock(&ext4_spinlock); }
-
 int32 ext4_sync_inode(struct ext4_inode_ref* inode_ref);
 int32 ext4_fs_sync(struct ext4_fs* fs);
 
-
-
+void ext4_lock(void);
+void ext4_unlock(void);
 /* Block device adapter */
-struct ext4_blockdev* ext4_blockdev_create_adapter(struct block_device* kernel_bdev);
+struct ext4_blockdev* ext4_blockdev_create_adapter(struct blockdevice* kernel_bdev);
 void ext4_blockdev_free_adapter(struct ext4_blockdev* e_blockdevice);
+int ext4_adapter_mount(struct fstype* fs, uint64_t rwflag,const void* data);
 
 
 /* Forward declarations for file and dir operations */
+extern struct fstype ext4_fs_type;
 extern const struct file_operations ext4_file_operations;
 extern const struct file_operations ext4_dir_operations;
 

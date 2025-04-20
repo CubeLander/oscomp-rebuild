@@ -1,8 +1,32 @@
-#include <kernel/sched.h>
-#include <kernel/vfs.h>
-#include <kernel/syscall/syscall.h>
-#include <kernel/mmu.h>
-#include <kernel/util.h>
+#include <kernel.h>
+#include <kernel/fs/ext4_adaptor.h>
+#include <kernel/device/buffer_head.h>
+#include <kernel/drivers/virtio_device.h>
+
+
+int32 do_root_mount(const char* source, const char* target, const char* fstype_name, uint64 flags, const void* data){
+	int ret = 0;
+    struct ext4_blockdev *e_blockdevice = ext4_blockdev_create_adapter(&virtio_bd);
+	CHECK_PTR_VALID(e_blockdevice, PTR_TO_ERR(e_blockdevice));
+	ret = ext4_device_register(e_blockdevice, "virtio");
+	if(ret != EOK){
+		kprintf("ext4_device_register failed: %d\n", ret);
+        kfree(e_blockdevice);
+		return ret;
+	}
+    /* ext4 */
+    kprintf("do_root_mount: checking  EXT4\n");
+    struct buffer_head* bh = buffer_alloc(&virtio_bd, 2); /* magic number is at offset 0x438 */
+    if (!(bh->b_data[56] == 0x53 && bh->b_data[57] == 0xEF)) {
+        buffer_free(bh);
+		return -ENOSYS; /* can't get filesystem type */
+    }
+	kprintf("do_root_mount: yes it's ext4\n");
+	return ext4_adapter_mount(&ext4_fs_type, flags, data);
+
+
+
+}
 
 
 /**
@@ -18,12 +42,17 @@
  *
  * 返回: 成功时返回0，失败时返回负的错误码
  */
+static int root_mount_flag = 1;
+// 因为没有做ramfs，所以说硬编码一个第一次做mount的flag。
 int32 do_mount(const char* source, const char* target, const char* fstype_name, uint64 flags, const void* data) {
 	struct path mount_path;
 	struct fstype* type;
 	struct vfsmount* newmnt;
 	int32 ret;
-
+	if(root_mount_flag){
+		root_mount_flag = 0;
+		return do_root_mount(source, target, fstype_name, flags, data);
+	}
 	/* 查找文件系统类型 */
 	type = fstype_lookup(fstype_name);
 	if (!type) return -ENODEV;
@@ -52,7 +81,7 @@ int32 do_mount(const char* source, const char* target, const char* fstype_name, 
 	}
 
 	if (PTR_IS_ERROR(newmnt)) {
-		ret = PTR_ERR(newmnt);
+		ret = PTR_TO_ERR(newmnt);
 		goto out_path;
 	}
 

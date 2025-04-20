@@ -6,12 +6,11 @@
 //
 
 #include <kernel/vfs.h>
-#include <kernel/mmu.h>
-#include <kernel/util.h>
 #include <kernel/device/buffer_head.h>
-#include <kernel/drivers/virtio.h>
+#include <kernel/device/blockdevice.h>
+#include <kernel/drivers/virtio_mmio.h>
 #include <kernel/riscv.h>
-#include <kernel/types.h>
+#include <kernel.h>
 
 // the address of virtio mmio register r.
 #define R(r) ((volatile uint32*)(VIRTIO0 + (r)))
@@ -54,6 +53,10 @@ static struct disk {
 	spinlock_t vdisk_lock;
 
 } disk;
+
+struct mutex* disk_mutex = NULL;
+
+
 
 void virtio_disk_init(void) {
 	uint32 status = 0;
@@ -136,6 +139,7 @@ void virtio_disk_init(void) {
 	*R(VIRTIO_MMIO_STATUS) = status;
 
 	// plic.c and trap.c arrange for interrupts from VIRTIO0_IRQ.
+	disk_mutex = mutex_alloc("virtio_disk_mutex");
 }
 
 // find a free descriptor, mark it non-free, return its index.
@@ -298,3 +302,9 @@ void virtio_disk_intr() {
 
 	spinlock_unlock(&disk.vdisk_lock);
 }
+
+
+
+
+
+

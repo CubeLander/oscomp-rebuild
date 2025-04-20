@@ -610,7 +610,7 @@ uint32 fdtable_getFdFlags(struct fdtable* fdt, uint64 fd) {
 // 	/*
 // 	struct file* epfile = create_epoll_file();
 // 	if (PTR_IS_ERROR(epfile))
-// 	    return PTR_ERR(epfile);
+// 	    return PTR_TO_ERR(epfile);
 
 // 	int32 fd = fdtable_allocFd(fdt, 0);
 // 	if (fd < 0) {

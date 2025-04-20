@@ -270,7 +270,7 @@ int32 vfs_pathwalk(struct dentry* base_dentry, struct vfsmount* base_mnt, const 
 			dentry_unref(dentry);
 			if (mnt) mount_unref(mnt);
 			kfree(path_copy);
-			return next ? PTR_ERR(next) : -ENOMEM;
+			return next ? PTR_TO_ERR(next) : -ENOMEM;
 		}
 
 		/* If negative dentry, ask filesystem to look it up */
@@ -283,7 +283,7 @@ int32 vfs_pathwalk(struct dentry* base_dentry, struct vfsmount* base_mnt, const 
 				dentry_unref(dentry);
 				if (mnt) mount_unref(mnt);
 				kfree(path_copy);
-				return PTR_ERR(found);
+				return PTR_TO_ERR(found);
 			}
 
 			if (found && found->d_inode) {
@@ -322,7 +322,7 @@ int32 vfs_pathwalk(struct dentry* base_dentry, struct vfsmount* base_mnt, const 
 		// 		if (mnt)
 		// 			mount_unref(mnt);
 		// 		kfree(path_copy);
-		// 		return PTR_ERR(link_target);
+		// 		return PTR_TO_ERR(link_target);
 		// 	}
 
 		// 	dentry_unref(dentry);
@@ -425,7 +425,7 @@ int32 vfs_mknod_block(const char* path, mode_t mode, dev_t dev) {
 	dentry = vfs_mknod(NULL, path, S_IFBLK | (mode & 0777), dev);
 
 	if (PTR_IS_ERROR(dentry)) {
-		error = PTR_ERR(dentry);
+		error = PTR_TO_ERR(dentry);
 		/* Special case: if the node exists, don't treat as error */
 		if (error == -EEXIST) return 0;
 		return error;

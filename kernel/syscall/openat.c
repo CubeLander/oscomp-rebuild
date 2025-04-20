@@ -68,7 +68,7 @@ int32 do_openat(int32 dirfd, const char* pathname, int32 flags, mode_t mode) {
 	ret = file_open(filp, flags);
 	if (ret < 0) {
 		path_destroy(&path);
-		return PTR_ERR(filp);
+		return PTR_TO_ERR(filp);
 	}
 #ifdef DO_OPENAT_DEBUG
 

@@ -1,3 +1,4 @@
+#pragma once
 //
 // virtio device definitions.
 // for both the mmio interface, and virtio descriptors.
@@ -98,3 +99,5 @@ struct virtio_blk_req {
   uint32 reserved;
   uint64 sector;
 };
+void virtio_disk_init(void);
+void virtio_disk_rw(struct buffer_head* b, int write);

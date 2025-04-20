@@ -16,7 +16,7 @@ struct fstype {
 	spinlock_t fs_list_superblock_lock;
 	/* Add to struct fstype */
 	uint64 fs_capabilities; /* Capabilities like case sensitivity */
-
+	void* fs_data;
 	struct superblock* (*fs_mount)(struct fstype* type, int32 flags, dev_t dev_id,const void* fs_data);
 	// 这个虚函数在架构中等效于__fstype_allocSuperblock
 	// called by vfs_kern_mount->fstype_mount

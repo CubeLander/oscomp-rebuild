@@ -448,7 +448,7 @@ int32 inode_mknod(struct inode* dir, struct dentry* dentry, mode_t mode, dev_t d
 
 	/* Default implementation for simple filesystems like ramfs */
 	struct inode* inode = inode_acquire(dir->i_superblock, 0);
-	if (PTR_IS_ERROR(inode)) return PTR_ERR(inode);
+	if (PTR_IS_ERROR(inode)) return PTR_TO_ERR(inode);
 	// TODO: 做一个通用的inode_init方法。
 	// /* Set up basic inode attributes */
 	// inode->i_mode = mode;

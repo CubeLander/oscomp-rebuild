@@ -101,7 +101,7 @@ struct itimerspec {
 #define IS_ERR_VALUE(x) ((unsigned long)(x) >= (unsigned long)-MAX_ERRNO)
 #define unlikely_if(x) if (unlikely(x))
 #define ERR_TO_PTR(err) ((void*)((long)(err)))
-#define PTR_ERR(ptr) ((long)(ptr))
+#define PTR_TO_ERR(ptr) ((long)(ptr))
 #define PTR_IS_ERROR(ptr) IS_ERR_VALUE((unsigned long)(ptr))
 // clang-format off
 #define CHECK_PTR_VALID(ptr, errno_val) \

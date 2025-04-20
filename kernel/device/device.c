@@ -1,11 +1,11 @@
-#include <kernel/device/block_device.h>
+#include <kernel/device/blockdevice.h>
 #include <kernel/util/print.h>
 #include <kernel/util.h>
 #include <kernel/vfs.h>
 
 static void __register_platform_devices(void);
 
-// declared in block_device.c
+// declared in blockdevice.c
 extern struct list_head block_device_list;
 extern spinlock_t block_device_list_lock;
 
@@ -31,7 +31,7 @@ static struct block_operations mem_blk_ops = {
  */
 int32 create_device_nodes(void) {
 	struct dentry* dev_dir;
-	struct block_device* bdev;
+	struct blockdevice* bdev;
 	char name[32];
 	int32 ret = 0;
 	mode_t mode = S_IFBLK | 0600;
@@ -39,8 +39,8 @@ int32 create_device_nodes(void) {
 	/* Create /dev directory if it doesn't exist */
 	dev_dir = vfs_mkdir(NULL, "/dev", 0755);
 	if (PTR_IS_ERROR(dev_dir)) {
-		kprintf("Failed to create /dev directory: %d\n", PTR_ERR(dev_dir));
-		return PTR_ERR(dev_dir);
+		kprintf("Failed to create /dev directory: %d\n", PTR_TO_ERR(dev_dir));
+		return PTR_TO_ERR(dev_dir);
 	}
 
 	/* Lock the block device list */
@@ -95,7 +95,7 @@ void device_init(void) {
  */
 static void __register_platform_devices(void) {
 	/* Register RAM disk device */
-	struct block_device* ram_dev = alloc_block_device();
+	struct blockdevice* ram_dev = alloc_block_device();
 	if (ram_dev) {
 		ram_dev->bd_dev = MKDEV(RAMDISK_MAJOR, 0);
 		ram_dev->bd_block_size = 512;

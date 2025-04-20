@@ -5,6 +5,9 @@
 		"pthread.h": "c",
 		"util.h": "c",
 		"io_vector.h": "c",
-		"list.h": "c"
+		"list.h": "c",
+		"mmu.h": "c",
+		"blockdevice.h": "c",
+		"buffer_head.h": "c"
 	}
 }

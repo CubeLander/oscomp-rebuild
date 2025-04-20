@@ -1,11 +1,11 @@
-#include <kernel/device/block_device.h>
+#include <kernel/device/blockdevice.h>
 #include <kernel/fs/lwext4/ext4_blockdev.h>
 #include <kernel/mm/kmalloc.h>
 #include <kernel/types.h>
 #include <kernel/util/string.h>
 #include <kernel/vfs.h>
 
-static inline struct block_device* __ext4_get_kernel_bdev(struct ext4_blockdev* e_blockdevice);
+static inline struct blockdevice* __ext4_get_kernel_bdev(struct ext4_blockdev* e_blockdevice);
 
 
 /* Forward declarations */
@@ -14,7 +14,7 @@ static int32 ext4_blockdev_adapter_bread(struct ext4_blockdev* e_blockdevice, vo
 static int32 ext4_blockdev_adapter_bwrite(struct ext4_blockdev* e_blockdevice, const void* buf, uint64_t blk_id, uint32_t blk_cnt);
 static int32 ext4_blockdev_adapter_close(struct ext4_blockdev* e_blockdevice);
 
-struct ext4_blockdev* ext4_blockdev_create_adapter(struct block_device* kernel_bdev) {
+struct ext4_blockdev* ext4_blockdev_create_adapter(struct blockdevice* kernel_bdev) {
 	if (!kernel_bdev) return NULL;
 
 	/* Allocate the ext4 blockdev structure */
@@ -51,7 +51,7 @@ struct ext4_blockdev* ext4_blockdev_create_adapter(struct block_device* kernel_b
 
 	iface->ph_bsize = block_size;
 
-	iface->ph_bcnt = kernel_bdev->bd_nr_blocks; /* This should be available in your block_device */
+	iface->ph_bcnt = kernel_bdev->bd_nr_blocks; /* This should be available in your blockdevice */
 	iface->ph_refctr = 1;                       /* Start with one reference */
 	iface->bread_ctr = 0;
 	iface->bwrite_ctr = 0;
@@ -90,7 +90,7 @@ static int32 ext4_blockdev_adapter_open(struct ext4_blockdev* e_blockdevice) {
 	int32 ret;
 
 	if (!e_blockdevice) return -EINVAL;
-	struct block_device* kernel_bdev = __ext4_get_kernel_bdev(e_blockdevice);
+	struct blockdevice* kernel_bdev = __ext4_get_kernel_bdev(e_blockdevice);
 	if (!kernel_bdev) return -EINVAL;
 
 	/* Use kernel's block device open function */
@@ -112,7 +112,7 @@ static int32 ext4_blockdev_adapter_bread(struct ext4_blockdev* e_blockdevice, vo
 	
 
 	if (!e_blockdevice || !buf) return -EINVAL;
-	struct block_device* kernel_bdev = __ext4_get_kernel_bdev(e_blockdevice);
+	struct blockdevice* kernel_bdev = __ext4_get_kernel_bdev(e_blockdevice);
 
 	if (!kernel_bdev) return -EINVAL;
 
@@ -128,7 +128,7 @@ static int32 ext4_blockdev_adapter_bread(struct ext4_blockdev* e_blockdevice, vo
 static int32 ext4_blockdev_adapter_bwrite(struct ext4_blockdev* e_blockdevice, const void* buf, uint64_t blk_id, uint32_t blk_cnt) {
 
 	if (!e_blockdevice || !buf) return -EINVAL;
-	struct block_device* kernel_bdev = __ext4_get_kernel_bdev(e_blockdevice);
+	struct blockdevice* kernel_bdev = __ext4_get_kernel_bdev(e_blockdevice);
 	if (!kernel_bdev) return -EINVAL;
 
 	/* Use kernel's block device write function */
@@ -145,7 +145,7 @@ static int32 ext4_blockdev_adapter_close(struct ext4_blockdev* e_blockdevice) {
 
 	if (!e_blockdevice) return -EINVAL;
 
-	struct block_device* kernel_bdev = __ext4_get_kernel_bdev(e_blockdevice);
+	struct blockdevice* kernel_bdev = __ext4_get_kernel_bdev(e_blockdevice);
 
 	if (!kernel_bdev) return -EINVAL;
 
@@ -159,7 +159,9 @@ static int32 ext4_blockdev_adapter_close(struct ext4_blockdev* e_blockdevice) {
 }
 
 
-static inline struct block_device* __ext4_get_kernel_bdev(struct ext4_blockdev* e_blockdevice) {
+static inline struct blockdevice* __ext4_get_kernel_bdev(struct ext4_blockdev* e_blockdevice) {
 	if (!e_blockdevice) return NULL;
-	return (struct block_device*)e_blockdevice->bdif->p_user;
+	return (struct blockdevice*)e_blockdevice->bdif->p_user;
 }
+
+

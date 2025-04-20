@@ -10,7 +10,7 @@
 struct fstype;
 struct superblock_operations;
 struct dentry;
-struct block_device;
+struct blockdevice;
 struct seq_file;
 struct writeback_control;
 
@@ -25,7 +25,7 @@ struct superblock {
 	spinlock_t s_list_mounts_lock;
 	struct dentry* s_root;
 	dev_t s_device_id;      // Device identifier, 目前简单通过对挂载路径做哈希得到
-	struct block_device* s_bdev; // Block device
+	struct blockdevice* s_bdev; // Block device
 
 	/*********************** fs specified ******************************/
 	struct fstype* s_fstype;
@@ -105,10 +105,10 @@ struct superblock_operations {
 	int32 (*get_block)(struct inode* inode, sector_t iblock, struct buffer_head* bh_result, int32 create);
 
     // 阶段1: 初始化前检查 - 验证设备和传入的参数
-    int32 (*pre_mount_check)(struct superblock *sb, struct block_device *bdev, 
+    int32 (*pre_mount_check)(struct superblock *sb, struct blockdevice *bdev, 
 		void *mount_options, int32 flags);
     // // 阶段2: 读取文件系统元数据 - 验证文件系统格式并填充superblock
-    // int32 (*fill_super)(struct superblock *sb, struct block_device *bdev, 
+    // int32 (*fill_super)(struct superblock *sb, struct blockdevice *bdev, 
 	// 	void *mount_options, int32 silent);
 	// 这两个过程是fstype中实现的虚函数
 	// // 阶段3: 文件系统特定初始化 - 分配缓存、建立根目录、初始化特殊结构

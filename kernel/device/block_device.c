@@ -1,9 +1,10 @@
-#include <kernel/device/block_device.h>
+#include <kernel/device/blockdevice.h>
 #include <kernel/mm/kmalloc.h>
 #include <kernel/types.h>
 #include <kernel/util.h>
 #include <kernel/types.h>
 #include <kernel/util/print.h>
+#include <kernel/device/buffer_head.h>
 
 /* Global block device list */
 struct list_head block_device_list;
@@ -21,12 +22,12 @@ static char *major_names[MAX_MAJOR];
  *
  * Returns: Newly allocated block device or NULL
  */
-struct block_device *alloc_block_device(void) {
-    struct block_device *bdev = kmalloc(sizeof(struct block_device));
+struct blockdevice *alloc_block_device(void) {
+    struct blockdevice *bdev = kmalloc(sizeof(struct blockdevice));
     if (!bdev)
         return NULL;
     
-    memset(bdev, 0, sizeof(struct block_device));
+    memset(bdev, 0, sizeof(struct blockdevice));
     atomic_set(&bdev->bd_refcnt, 1);  /* Initial reference count */
     spinlock_init(&bdev->bd_lock);
     INIT_LIST_HEAD(&bdev->bd_list);
@@ -38,7 +39,7 @@ struct block_device *alloc_block_device(void) {
  * free_block_device - Free block device structure 
  * @bdev: Block device to free
  */
-void free_block_device(struct block_device *bdev) {
+void free_block_device(struct blockdevice *bdev) {
     if (!bdev)
         return;
     
@@ -58,8 +59,8 @@ void free_block_device(struct block_device *bdev) {
  * 
  * Returns: Block device pointer or NULL if not found
  */
-struct block_device *blockdevice_lookup(dev_t dev) {
-    struct block_device *bdev = NULL;
+struct blockdevice *blockdevice_lookup(dev_t dev) {
+    struct blockdevice *bdev = NULL;
     
     spinlock_lock(&block_device_list_lock);
     list_for_each_entry(bdev, &block_device_list, bd_list) {
@@ -80,7 +81,7 @@ struct block_device *blockdevice_lookup(dev_t dev) {
  *
  * Decreases reference count and frees the structure when it reaches zero
  */
-void blockdevice_unref(struct block_device *bdev) {
+void blockdevice_unref(struct blockdevice *bdev) {
     if (!bdev)
         return;
     
@@ -103,7 +104,7 @@ void blockdevice_unref(struct block_device *bdev) {
  * 
  * Returns: 0 on success, error code on failure
  */
-int32 blockdevice_open(struct block_device *bdev, fmode_t mode) {
+int32 blockdevice_open(struct blockdevice *bdev, fmode_t mode) {
     int32 res = 0;
     uint32 access_mode = mode & O_ACCMODE;
     
@@ -132,7 +133,7 @@ int32 blockdevice_open(struct block_device *bdev, fmode_t mode) {
  *
  * This closes the block device, calling its release method if needed.
  */
-void blockdevice_close(struct block_device *bdev) {
+void blockdevice_close(struct blockdevice *bdev) {
     if (!bdev)
         return;
     
