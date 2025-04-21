@@ -7,8 +7,8 @@
         # be placed at 0x80000000.
 #define PAGE_SIZE 4096
 .section .text.entry
-.global _entry
-_entry:
+.global _start
+_start:
     la sp, stack0
 
     # 每个CPU的栈是: 保护页 + 实际栈页

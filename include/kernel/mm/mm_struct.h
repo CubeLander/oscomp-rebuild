@@ -6,7 +6,7 @@
 #include <kernel/mm/pagetable.h>
 #include <kernel/mm/vma.h>
 #include <kernel/riscv.h>
-#include <kernel/sched/process.h>
+#include <kernel/sched/task.h>
 #include <kernel/types.h>
 #include <kernel/util/list.h>
 #include <kernel/util/spinlock.h>

@@ -26,7 +26,7 @@ struct poll_table_struct {
     poll_queue_proc qproc;              /* 队列回调函数，用于注册到等待队列 */
     uint64 key;                  /* 事件掩码，标识感兴趣的事件类型 */
     struct wait_queue_entry *entry;     /* 等待队列条目 */
-    struct task_struct *polling_task;   /* 执行轮询的任务 */
+    task_t *polling_task;   /* 执行轮询的任务 */
 };
 
 /* 轮询表初始化与清理 */

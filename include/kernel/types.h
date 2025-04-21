@@ -12,24 +12,22 @@
 #include <unistd.h>
 #include <poll.h>
 
-// #include <bits/fcntl.h>
-// #include <sys/cdefs.h>
-// #include <kernel/riscv.h>
 
-/* 关于指针和数据类型的说明
- * uint64: 切实的数据值，不可能用作内存/内存运算
- *
- * 由于我们特殊的内核空间布局结构（物理内存总是会在内核页表中留一份直接映射）
- * 所以说paddr_t可以代表整个的内核物理地址空间+内核虚拟地址空间
- * paddr_t: 内核物理地址和内核虚拟地址（参与运算）
- * vaddr_t：用户虚拟地址（参与运算）
- *
- * kptr_t: 内核空间指针
- * uptr_t: 用户空间指针
- *
- *
- * 所以说，内核的文档中的概念，需要严格区分指针和地址。
+/*
+ * 从结构体中的list指针获取结构体地址
  */
+#define container_of(ptr, type, member)                                        \
+  ({                                                                           \
+    const typeof(((type *)0)->member) *__mptr = (ptr);                         \
+    (type *)((char *)__mptr - offsetof(type, member));                         \
+  })
+
+/*
+ * 计算结构体成员的偏移量
+ */
+#ifndef offsetof
+#define offsetof(TYPE, MEMBER) ((size_t) & ((TYPE *)0)->MEMBER)
+#endif
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;

@@ -3,5 +3,5 @@
 
 #include <kernel/sched/signal.h>
 #include <kernel/sched/pid.h>
-#include <kernel/sched/process.h>
+#include <kernel/sched/task.h>
 #include <kernel/sched/mutex.h>

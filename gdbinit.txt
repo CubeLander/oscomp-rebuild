@@ -7,7 +7,7 @@ file build/bin/kernel.elf
 # b sbi_init
 # b smode_trap_vector
 # b filename_lookup
-# b _entry
+# b _start
 awatch *(uint64_t*)0x0
 display /5i $pc
 # b s_start

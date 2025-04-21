@@ -1,10 +1,10 @@
 #ifndef _ELF_H_
 #define _ELF_H_
 #include <kernel/types.h>
-#include <kernel/sched/process.h>
+#include <kernel/sched/task.h>
 
-void load_elf_from_file(struct task_struct *p, char* filename);
-int32 load_init_binary(struct task_struct *init_task, const char *path);
+void load_elf_from_file(task_t *p, char* filename);
+int32 load_init_binary(task_t *init_task, const char *path);
 
 // elf header structure
 typedef struct elf_header_t {

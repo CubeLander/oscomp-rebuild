@@ -102,11 +102,17 @@ enum fork_choice {
 	FORK_COW,
 };
 
-struct task_struct {
+
+typedef struct task {
+	uint64 thread_flags;
+	uint64 kernel_sp;
+	uint64 user_sp;
+
+
+
+
 	uint64 kstack; // 分配一个页面当内核栈，注意内核栈的范围是[kstack-PAGE_SIZE,
 	               // kstack)
-	struct trapframe* trapframe;
-	struct trapframe* ktrapframe;
 
 	struct mm_struct* mm;
 	// struct mm_struct *active_mm;
@@ -121,7 +127,7 @@ struct task_struct {
 	uint32 state;
 	uint32 flags;
 	// parent process
-	struct task_struct* parent;
+	task_t* parent;
 	struct list_head children;
 	struct list_head sibling;
 	// ready queue
@@ -148,14 +154,17 @@ struct task_struct {
 	gid_t gid;
 	gid_t egid;
 	// 目前还用不上这些字段
-};
-struct task_struct* alloc_init_task();
+} task_t;
 
-struct task_struct* alloc_process();
-int32 free_process(struct task_struct* proc);
+
+
+task_t* alloc_init_task();
+
+task_t* alloc_process();
+int32 free_process(task_t* proc);
 
 // fork a child from parent
-int32 do_fork(struct task_struct* parent);
+int32 do_fork(task_t* parent);
 int32 do_exec(uint64 path);
 ssize_t do_wait(int32 pid);
 int32 current_is_in_group(gid_t gid);
@@ -163,7 +172,7 @@ int32 current_is_in_group(gid_t gid);
 /**
  * 打印进程的内存布局信息，用于调试
  */
-void print_proc_memory_layout(struct task_struct* proc);
+void print_proc_memory_layout(task_t* proc);
 
 
 /**

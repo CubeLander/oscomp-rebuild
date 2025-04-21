@@ -21,6 +21,8 @@
 __attribute__((aligned(PAGE_SIZE))) char stack0[PAGE_SIZE * (NCPU + 1 + NCPU)];
 
 __attribute__((aligned(PAGE_SIZE))) char emergency_stack_top[PAGE_SIZE];
+__attribute__((aligned(PAGE_SIZE))) task_t *current_percpu[NCPU];
+// tp寄存器保存current_percpu中当前进程指针位置，然后通过偏移量反推hartid
 
 void setup_stack_guard_pages(void) {
 	// 计算保护页的起始地址
@@ -86,9 +88,9 @@ static void kernel_vm_init(void) {
  *
  * Returns: 0 on success, negative error code on failure
  */
-int32 setup_init_fds(struct task_struct* init_task) {
+int32 setup_init_fds(task_t* init_task) {
 	int32 fd, console_fd;
-	struct task_struct* saved_task = current;
+	task_t* saved_task = current;
 
 	// Temporarily set current to init task
 	set_current_task(init_task);
@@ -108,7 +110,7 @@ int32 setup_init_fds(struct task_struct* init_task) {
 }
 
 int32 create_init_process(void) {
-	struct task_struct* init_task;
+	task_t* init_task;
 	int32 error = -1;
 
 	// Create the init process task structure
@@ -147,7 +149,7 @@ void start_trap() {
 		;
 }
 
-struct task_struct boot_task;
+task_t boot_task;
 struct trapframe boot_trapframe;
 // 这个boot_trapframe应该给每个核都发一个
 void boot_trap_setup(void) {

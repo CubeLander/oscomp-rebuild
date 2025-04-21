@@ -3,7 +3,7 @@
 
 #include <kernel/mm/page.h>
 #include <kernel/mm/pagetable.h>
-#include <kernel/sched/process.h>
+#include <kernel/sched/task.h>
 #include <kernel/riscv.h>
 #include <kernel/types.h>
 

@@ -45,7 +45,7 @@ void handle_mtimer_trap() {
  * @param stval 访问时导致页错误的虚拟地址
  */
 void handle_user_page_fault(uint64 mcause, uint64 sepc, uint64 stval) {
-	struct task_struct* proc = current;
+	task_t* proc = current;
 	uint64 addr = stval;
 
 	kprintf("sepc=%lx, handle_page_fault: %lx\n", sepc, addr);

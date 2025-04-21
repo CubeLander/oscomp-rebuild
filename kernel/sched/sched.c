@@ -6,15 +6,15 @@
 #include <kernel/mm/mm_struct.h>
 #include <kernel/sched/pid.h>
 #include <kernel/sched/sched.h>
-#include <kernel/sched/process.h>
+#include <kernel/sched/task.h>
 #include <kernel/trapframe.h>
 #include <kernel/util.h>
 #include <kernel/util/list.h>
 #include <kernel/util/string.h>
 
 struct list_head ready_queue;
-struct task_struct *procs[NPROC];
-struct task_struct *current_percpu[NCPU];
+task_t *procs[NPROC];
+
 
 //
 // initialize process pool (the procs[] array). added @lab3_1
@@ -23,7 +23,7 @@ void init_scheduler() {
   // kprintf("init_scheduler: start\n");
   INIT_LIST_HEAD(&ready_queue);
   pid_init();
-  memset(procs, 0, sizeof(struct task_struct *) * NPROC);
+  memset(procs, 0, sizeof(task_t *) * NPROC);
 
   for (int32 i = 0; i < NPROC; ++i) {
     procs[i] = NULL;
@@ -31,11 +31,11 @@ void init_scheduler() {
   kprintf("Scheduler initiated\n");
 }
 
-struct task_struct *alloc_empty_process() {
+task_t *alloc_empty_process() {
   for (int32 i = 0; i < NPROC; i++) {
     if (procs[i] == NULL) {
-      procs[i] = (struct task_struct *)kmalloc(sizeof(struct task_struct));
-      memset(procs[i], 0, sizeof(struct task_struct));
+      procs[i] = (task_t *)kmalloc(sizeof(task_t));
+      memset(procs[i], 0, sizeof(task_t));
       return procs[i];
     }
   }
@@ -46,7 +46,7 @@ struct task_struct *alloc_empty_process() {
 //
 // insert a process, proc, into the END of ready queue.
 //
-void insert_to_ready_queue(struct task_struct *proc) {
+void insert_to_ready_queue(task_t *proc) {
   kprintf("going to insert process %d to ready queue.\n", proc->pid);
   list_add_tail(&proc->ready_queue_node, &ready_queue);
 }
@@ -59,9 +59,9 @@ void insert_to_ready_queue(struct task_struct *proc) {
 //
 void schedule() {
   kprintf("schedule: start\n");
-  extern struct task_struct *procs[NPROC];
+  extern task_t *procs[NPROC];
   int32 hartid = read_tp();
-  struct task_struct *cur = current;
+  task_t *cur = current;
   // kprintf("debug\n");
   if (cur &&
       ((cur->state == TASK_INTERRUPTIBLE) |
@@ -104,7 +104,7 @@ void schedule() {
     // }
   }
 
-  current = container_of(ready_queue.next, struct task_struct, ready_queue_node);
+  current = container_of(ready_queue.next, task_t, ready_queue_node);
   list_del(ready_queue.next);
   if (cur->ktrapframe != NULL) {
     kprintf("going to schedule process %d to run in s-mode.\n", current->pid);
@@ -119,7 +119,7 @@ void schedule() {
   }
 }
 
-void switch_to(struct task_struct *proc) {
+void switch_to(task_t *proc) {
 
   assert(proc);
   current = proc;
@@ -159,7 +159,7 @@ void switch_to(struct task_struct *proc) {
  * 
  * Returns: Pointer to the task_struct if found, NULL if not found
  */
-struct task_struct *find_process_by_pid(pid_t pid) {
+task_t *find_process_by_pid(pid_t pid) {
     if (pid <= 0)
         return NULL;
     
@@ -182,7 +182,7 @@ struct task_struct *find_process_by_pid(pid_t pid) {
  * that called this function. This is primarily used during
  * initialization or special operations like setting up the init task.
  */
-void set_current_task(struct task_struct* task) {
+void set_current_task(task_t* task) {
     int32 hartid = read_tp();
     current_percpu[hartid] = task;
 }

@@ -16,7 +16,7 @@
 
 /* 外部声明 */
 extern void schedule(void);
-extern void scheduler_register_task(struct task_struct *tsk);
+extern void scheduler_register_task(task_t *tsk);
 
 
 static inline void halt_cpu(void) {
@@ -48,7 +48,7 @@ void idle_loop(void) {
  * 实际实现中还会有更多字段和 CPU 上下文信息。
  * 这里特指0号idle_task
  */
-struct task_struct idle_task;
+task_t idle_task;
 //struct proc_file_management kernel_file_management;
 /*
  * init_idle_task - 初始化并注册 idle 进程

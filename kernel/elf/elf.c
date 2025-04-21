@@ -12,7 +12,7 @@
 #include <kernel/mm/mmap.h>
 #include <kernel/mm/vma.h>
 #include <kernel/riscv.h>
-#include <kernel/sched/process.h>
+#include <kernel/sched/task.h>
 #include <kernel/trapframe.h>
 
 #include <kernel/util/print.h>
@@ -24,12 +24,12 @@
  */
 typedef struct elf_context {
   int32 fd;                   // 文件描述符
-  struct task_struct *proc; // 目标进程
+  task_t *proc; // 目标进程
   elf_header ehdr;          // ELF头部
   uint64 entry_point;       // 入口点
 } elf_context;
 
-static int32 init_elf_context(elf_context *ctx, int32 fd, struct task_struct *proc);
+static int32 init_elf_context(elf_context *ctx, int32 fd, task_t *proc);
 static void setup_global_pointer(elf_context *ctx);
 
 static int32 load_segment(elf_context *ctx, elf_prog_header *ph);
@@ -51,7 +51,7 @@ static int32 load_elf_binary(elf_context *ctx);
  * @param proc 目标进程
  * @param filename ELF文件名
  */
-void load_elf_from_file(struct task_struct *proc, char *filename) {
+void load_elf_from_file(task_t *proc, char *filename) {
   elf_context ctx;
 
   kprintf("load_elf_from_file: Loading application: %s\n", filename);
@@ -255,7 +255,7 @@ static int32 validate_elf_header(elf_header *ehdr) {
  * @return 0表示成功，非0表示失败
  */
 static int32 load_segment(elf_context *ctx, elf_prog_header *ph) {
-  struct task_struct *proc = ctx->proc;
+  task_t *proc = ctx->proc;
   struct mm_struct *mm = proc->mm;
   int32 ret;
 
@@ -381,7 +381,7 @@ static void setup_global_pointer(elf_context *ctx) {
  * @return 0表示成功，非0表示失败
  */
 static int32 init_elf_context(elf_context *ctx, int32 fd,
-                            struct task_struct *proc) {
+                            task_t *proc) {
   memset(ctx, 0, sizeof(elf_context));
   ctx->fd = fd;
   ctx->proc = proc;
@@ -462,7 +462,7 @@ static int32 load_elf_binary(elf_context *ctx) {
  *
  * Returns: 0 on success, negative error code on failure
  */
-int32 load_init_binary(struct task_struct *init_task, const char *path) {
+int32 load_init_binary(task_t *init_task, const char *path) {
     elf_context ctx;
     int32 error = 0;
 

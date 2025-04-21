@@ -43,7 +43,7 @@ int32 mutex_lock(struct mutex* mtx) {
 int32 mutex_unlock(struct mutex* mtx) {
 	CHECK_PTR_VALID(mtx, -EINVAL);
 	spinlock_lock(&mtx->wait_lock);
-	struct task_struct* waiting_task = list_first_entry(&mtx->wait_queue, struct task_struct, wait_queue_node);
+	task_t* waiting_task = list_first_entry(&mtx->wait_queue, task_t, wait_queue_node);
 	if(waiting_task == NULL) {
 		atomic_set(&mtx->owner, -1);
 	} else {

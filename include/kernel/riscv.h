@@ -86,7 +86,7 @@
 
 #define read_reg(reg)              \
   ({                                     \
-    uint64 __tmp;                 \
+    unsigned long __tmp;                 \
     asm("mv %0, " #reg : "=r"(__tmp)); \
     __tmp;                               \
   })
@@ -96,7 +96,7 @@
 
   #define read_csr(reg)                             \
   ({                                              	\
-    uint64 __tmp;                          			\
+    unsigned long __tmp;                          			\
     asm volatile("csrr %0, " #reg : "=r"(__tmp)); 	\
     __tmp;                                        	\
   })
@@ -112,14 +112,14 @@ static inline int32 supports_extension(char ext) {
 
 #define swap_csr(reg, val)                                             \
    ({                                                                  \
-    uint64 __tmp;                                              \
+    unsigned long __tmp;                                              \
     asm volatile("csrrw %0, " #reg ", %1" : "=r"(__tmp) : "rK"(val)); \
     __tmp;                                                         \
   })
 
 #define set_csr(reg, bit)                                             \
   ({                                                                  \
-    uint64 __tmp;                                              \
+    unsigned long __tmp;                                              \
     asm volatile("csrrs %0, " #reg ", %1" : "=r"(__tmp) : "rK"(bit)); \
     __tmp;                                                            \
   })
@@ -132,61 +132,140 @@ static inline void intr_off(void) { write_csr(sstatus, read_csr(sstatus) & ~SSTA
 
 // are device interrupts enabled?
 static inline int32 is_intr_enable(void) {
-  //  uint64 x = r_sstatus();
-  uint64 x = read_csr(sstatus);
+  //  unsigned long x = r_sstatus();
+  unsigned long x = read_csr(sstatus);
   return (x & SSTATUS_SIE) != 0;
 }
 
 // read sp, the stack pointer
-static inline uint64 read_sp(void) {
-  uint64 x;
+static inline unsigned long read_sp(void) {
+  unsigned long x;
   asm volatile("mv %0, sp" : "=r"(x));
   return x;
 }
 
 // read tp, the thread pointer, holding hartid (core number), the index into cpus[].
-static inline uint64 read_tp(void) {
-  uint64 x;
+static inline unsigned long read_tp(void) {
+  unsigned long x;
   asm volatile("mv %0, tp" : "=r"(x));
   return x;
 }
 
 // write tp, the thread pointer, holding hartid (core number), the index into cpus[].
-static inline void write_tp(uint64 x) { asm volatile("mv tp, %0" : : "r"(x)); }
+static inline void write_tp(unsigned long x) { asm volatile("mv tp, %0" : : "r"(x)); }
 
-typedef struct riscv_regs_t {
-  /*  0  */ uint64 ra;
-  /*  8  */ uint64 sp;
-  /*  16 */ uint64 gp;
-  /*  24 */ uint64 tp;
-  /*  32 */ uint64 t0;
-  /*  40 */ uint64 t1;
-  /*  48 */ uint64 t2;
-  /*  56 */ uint64 s0;
-  /*  64 */ uint64 s1;
-  /*  72 */ uint64 a0;
-  /*  80 */ uint64 a1;
-  /*  88 */ uint64 a2;
-  /*  96 */ uint64 a3;
-  /* 104 */ uint64 a4;
-  /* 112 */ uint64 a5;
-  /* 120 */ uint64 a6;
-  /* 128 */ uint64 a7;
-  /* 136 */ uint64 s2;
-  /* 144 */ uint64 s3;
-  /* 152 */ uint64 s4;
-  /* 160 */ uint64 s5;
-  /* 168 */ uint64 s6;
-  /* 176 */ uint64 s7;
-  /* 184 */ uint64 s8;
-  /* 192 */ uint64 s9;
-  /* 196 */ uint64 s10;
-  /* 208 */ uint64 s11;
-  /* 216 */ uint64 t3;
-  /* 224 */ uint64 t4;
-  /* 232 */ uint64 t5;
-  /* 240 */ uint64 t6;
-}riscv_regs;
+typedef struct ptrace_regs {
+	unsigned long epc;        /*  0 */
+	unsigned long ra;         /*  8 */
+	unsigned long sp;         /* 16 */
+	unsigned long gp;         /* 24 */
+	unsigned long tp;         /* 32 */
+	unsigned long t0;         /* 40 */
+	unsigned long t1;         /* 48 */
+	unsigned long t2;         /* 56 */
+	unsigned long s0;         /* 64 */
+	unsigned long s1;         /* 72 */
+	unsigned long a0;         /* 80 */
+	unsigned long a1;         /* 88 */
+	unsigned long a2;         /* 96 */
+	unsigned long a3;         /* 104 */
+	unsigned long a4;         /* 112 */
+	unsigned long a5;         /* 120 */
+	unsigned long a6;         /* 128 */
+	unsigned long a7;         /* 136 */
+	unsigned long s2;         /* 144 */
+	unsigned long s3;         /* 152 */
+	unsigned long s4;         /* 160 */
+	unsigned long s5;         /* 168 */
+	unsigned long s6;         /* 176 */
+	unsigned long s7;         /* 184 */
+	unsigned long s8;         /* 192 */
+	unsigned long s9;         /* 200 */
+	unsigned long s10;        /* 208 */
+	unsigned long s11;        /* 216 */
+	unsigned long t3;         /* 224 */
+	unsigned long t4;         /* 232 */
+	unsigned long t5;         /* 240 */
+	unsigned long t6;         /* 248 */
+	/* Supervisor/Machine CSRs */
+	unsigned long status;     /* 256 */
+	unsigned long badaddr;    /* 264 */
+	unsigned long cause;      /* 272 */
+	unsigned long orig_a0;    /* 280 */
+	unsigned long ft0;
+	unsigned long ft1;
+	unsigned long ft2;
+	unsigned long ft3;
+	unsigned long ft4;
+	unsigned long ft5;
+	unsigned long ft6;
+	unsigned long ft7;
+	unsigned long fs0;
+	unsigned long fs1;
+	unsigned long fa0;
+	unsigned long fa1;
+	unsigned long fa2;
+	unsigned long fa3;
+	unsigned long fa4;
+	unsigned long fa5;
+	unsigned long fa6;
+	unsigned long fa7;
+	unsigned long fs2;
+	unsigned long fs3;
+	unsigned long fs4;
+	unsigned long fs5;
+	unsigned long fs6;
+	unsigned long fs7;
+	unsigned long fs8;
+	unsigned long fs9;
+	unsigned long fs10;
+	unsigned long fs11;
+	unsigned long ft8;
+	unsigned long ft9;
+	unsigned long ft10;
+	unsigned long ft11;
+} regs_t;
+
+#define PT_EPC      0
+#define PT_RA       8
+#define PT_SP       16
+#define PT_GP       24
+#define PT_TP       32
+#define PT_T0       40
+#define PT_T1       48
+#define PT_T2       56
+#define PT_S0       64
+#define PT_S1       72
+#define PT_A0       80
+#define PT_A1       88
+#define PT_A2       96
+#define PT_A3       104
+#define PT_A4       112
+#define PT_A5       120
+#define PT_A6       128
+#define PT_A7       136
+#define PT_S2       144
+#define PT_S3       152
+#define PT_S4       160
+#define PT_S5       168
+#define PT_S6       176
+#define PT_S7       184
+#define PT_S8       192
+#define PT_S9       200
+#define PT_S10      208
+#define PT_S11      216
+#define PT_T3       224
+#define PT_T4       232
+#define PT_T5       240
+#define PT_T6       248
+
+#define PT_STATUS   256
+#define PT_BADADDR  264
+#define PT_CAUSE    272
+#define PT_ORIG_A0  280
+#define PT_SIZE_ON_STACK  288
+
+
 
 // following lines are added @lab2_1
 static inline void flush_tlb(void) { asm volatile("sfence.vma zero, zero"); }

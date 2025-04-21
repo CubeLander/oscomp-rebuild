@@ -145,21 +145,7 @@ static inline void list_splice_init(struct list_head *list,
  */
 #define list_entry(ptr, type, member) container_of(ptr, type, member)
 
-/*
- * 从结构体中的list指针获取结构体地址
- */
-#define container_of(ptr, type, member)                                        \
-  ({                                                                           \
-    const typeof(((type *)0)->member) *__mptr = (ptr);                         \
-    (type *)((char *)__mptr - offsetof(type, member));                         \
-  })
 
-/*
- * 计算结构体成员的偏移量
- */
-#ifndef offsetof
-#define offsetof(TYPE, MEMBER) ((size_t) & ((TYPE *)0)->MEMBER)
-#endif
 
 /*
  * 遍历链表

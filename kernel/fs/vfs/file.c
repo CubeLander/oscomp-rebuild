@@ -4,7 +4,7 @@
 // #include <kernel/fs/vfs/namespace.h>
 #include <kernel/fs/vfs/path.h>
 #include <kernel/mm/kmalloc.h>
-#include <kernel/sched/process.h>
+#include <kernel/sched/task.h>
 #include <kernel/sched/sched.h>
 #include <kernel/types.h>
 #include <kernel/util/qstr.h>

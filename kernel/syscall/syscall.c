@@ -1,6 +1,6 @@
 #include <kernel/mm/kmalloc.h>
 #include <kernel/mm/uaccess.h>
-#include <kernel/sched/process.h>
+#include <kernel/sched/task.h>
 #include <kernel/util/print.h>
 #include <kernel/syscall/syscall.h>
 #include <kernel/types.h>
