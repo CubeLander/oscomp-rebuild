@@ -26,3 +26,4 @@ static inline void set_current_task(task_t* new_task){
 	cpuinfo_t* cpuinfo = (cpuinfo_t*)read_csr(sscratch);
 	cpuinfo->current_task = new_task;
 }
+

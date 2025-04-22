@@ -129,8 +129,8 @@ typedef struct task {
 	uint32 flags;
 	// parent process
 	struct task* parent;
-	struct list_head children;
-	struct list_head sibling;
+	struct list_head children_list;
+	struct list_node sibling_list_node;
 	// ready queue
 	struct list_node ready_queue_node;
 	struct list_node wait_queue_node;
@@ -159,9 +159,8 @@ typedef struct task {
 
 
 
-task_t* alloc_init_task();
 
-task_t* alloc_process();
+void task_init(task_t*);
 int32 free_process(task_t* proc);
 
 // fork a child from parent

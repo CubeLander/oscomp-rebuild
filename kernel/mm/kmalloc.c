@@ -261,11 +261,6 @@ void kmalloc_stats(void) {
   kprintf("Free page count: %d\n", get_free_page_count());
 }
 
-void* alloc_kernel_stack(){
-	void* kstack = kmalloc(PAGE_SIZE);
-  return kstack + PAGE_SIZE - 16;
-}
-
 
 /**
  * kstrdup - Duplicate a string with kmalloc

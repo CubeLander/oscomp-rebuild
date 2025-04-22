@@ -12,7 +12,7 @@
 
 void init_scheduler();
 void insert_to_ready_queue( task_t* proc );
-task_t *alloc_empty_process();
+task_t *alloc_task();
 void switch_to(task_t*);
 void schedule();
 task_t *find_process_by_pid(pid_t pid);

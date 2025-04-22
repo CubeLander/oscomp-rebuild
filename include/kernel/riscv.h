@@ -109,7 +109,6 @@ static inline int32 supports_extension(char ext) {
 
 #define write_csr(reg, val) ({ asm volatile("csrw " #reg ", %0" ::"rK"(val)); })
 
-
 #define swap_csr(reg, val)                                             \
    ({                                                                  \
     unsigned long __tmp;                                              \
@@ -144,12 +143,11 @@ static inline unsigned long read_sp(void) {
   return x;
 }
 
-// read tp, the thread pointer, holding hartid (core number), the index into cpus[].
-static inline unsigned long read_tp(void) {
-  unsigned long x;
-  asm volatile("mv %0, tp" : "=r"(x));
-  return x;
-}
+// static inline unsigned long read_tp(void) {
+//   unsigned long x;
+//   asm volatile("mv %0, tp" : "=r"(x));
+//   return x;
+// }
 
 // write tp, the thread pointer, holding hartid (core number), the index into cpus[].
 static inline void write_tp(unsigned long x) { asm volatile("mv tp, %0" : : "r"(x)); }
@@ -233,7 +231,9 @@ typedef struct float_registers {
     double f31;  // ft11
 } float_registers_t;
 
-
+static inline void wfi() {
+    asm volatile("wfi");
+}
 
 
 // following lines are added @lab2_1

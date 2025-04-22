@@ -3,17 +3,17 @@
  */
 
 #include <kernel/boot/dtb.h>
-#include <kernel/drivers/plic.h>
 #include <kernel/device/blockdevice.h>
 #include <kernel/device/sbi.h>
+#include <kernel/drivers/plic.h>
 #include <kernel/drivers/virtio_device.h>
 #include <kernel/elf.h>
 
 #include <kernel/riscv.h>
 
+#include <kernel.h>
 #include <kernel/syscall/syscall.h>
 #include <kernel/types.h>
-#include <kernel.h>
 #include <kernel/vfs.h>
 #include <stdio.h>
 
@@ -21,8 +21,9 @@
 __attribute__((aligned(PAGE_SIZE))) char stack0[PAGE_SIZE * (NCPU + 1 + NCPU)];
 
 __attribute__((aligned(PAGE_SIZE))) char emergency_stack_top[PAGE_SIZE];
-__attribute__((aligned(PAGE_SIZE))) task_t *current_percpu[NCPU];
 // tp寄存器保存current_percpu中当前进程指针位置，然后通过偏移量反推hartid
+task_t idle_tasks[NCPU] = {0};
+cpuinfo_t cpuinfos[NCPU] = {0};
 
 void setup_stack_guard_pages(void) {
 	// 计算保护页的起始地址
@@ -49,8 +50,8 @@ static void kernel_vm_init(void) {
 
 	extern char _ftext[], _etext[], _fdata[], _end[];
 	// kprintf("_etext=%lx,_ftext=%lx\n", _etext, _ftext);
-    // PLIC
-    pgt_map_pages(g_kernel_pagetable, PLIC, PLIC, 0x400000, prot_to_type(PROT_READ | PROT_WRITE, 0));
+	// PLIC
+	pgt_map_pages(g_kernel_pagetable, PLIC, PLIC, 0x400000, prot_to_type(PROT_READ | PROT_WRITE, 0));
 	pgt_map_pages(g_kernel_pagetable, (uint64)_ftext, (uint64)_ftext, (uint64)(_etext - _ftext), prot_to_type(PROT_READ | PROT_EXEC, 0));
 
 	// 映射内核HTIF段
@@ -110,11 +111,12 @@ int32 setup_init_fds(task_t* init_task) {
 }
 
 int32 create_init_process(void) {
-	task_t* init_task;
+	task_t* init_task = alloc_task();
+	task_init(init_task); // No parent for init
+	init_task->parent = init_task;
 	int32 error = -1;
 
 	// Create the init process task structure
-	init_task = alloc_process(); // No parent for init
 	if (!init_task) return -ENOMEM;
 
 	// Set up process ID and other basic attributes
@@ -149,30 +151,47 @@ void start_trap() {
 		;
 }
 
-task_t boot_task;
 // 这个boot_trapframe应该给每个核都发一个
-void boot_trap_setup(void) {
-	current_percpu[read_tp()] = &boot_task;
+void setup_cpu(int cpuid) {
+	write_csr(sscratch, &cpuinfos[cpuid]);
+	cpuinfos[cpuid].hart_id = cpuid;
+	cpuinfos[cpuid].current_task = &idle_tasks[cpuid];
+	write_csr(sstatus, read_csr(sstatus) | SSTATUS_SIE);
 
 	extern char smode_trap_vector[];
-	write_csr(sstatus, read_csr(sstatus) | SSTATUS_SIE);
 	write_csr(stvec, (uint64)smode_trap_vector);
 	write_csr(sie, read_csr(sie) | SIE_SEIE | SIE_STIE | SIE_SSIE);
 	uint64 ksp = read_reg(sp);
+	current->kernel_sp = ROUNDUP(ksp, PAGE_SIZE);
 
 	return;
 }
+
+void idle_loop() {
+	while (1) {
+		schedule();
+		wfi();
+	}
+}
+
+void init_idle_task(){
+	task_init(current);
+	current->pid = -hartid;
+}
+
 
 //
 // s_start: S-mode entry point of kernel
 //
 volatile static int counter = 0;
-void s_start(uintptr_t hartid, uintptr_t dtb) {
-	// 最重要！先把中断服务程序挂上去，不然崩溃都不知道怎么死的。
-	boot_trap_setup();
+void s_start(int cpuid, uintptr_t dtb) {
+	setup_cpu(cpuid);
+	memory_barrier();
+
+	if (hartid == 0) plic_init(); // set up interrupt controller
+	plic_init_hart();             // ask PLIC for device interrupts
 
 	if (hartid == 0) {
-		// spike_file_init(); //TODO: 将文件系统迁移到 QEMU
 		// init_dtb(dtb);
 		kprintf("Enter supervisor mode...\n");
 
@@ -182,21 +201,19 @@ void s_start(uintptr_t hartid, uintptr_t dtb) {
 		pagetable_activate(g_kernel_pagetable);
 		create_init_mm();
 		kmem_init();
-		init_scheduler();
 
-        // PLIC
-        plic_init(); // set up interrupt controller
-        plic_init_hart(); // ask PLIC for device interrupts
-		// kmalloc在形式上需要使用init_mm的“用户虚拟空间分配器”
-		// 所以我们在启用kmalloc之前，需要先初始化0号进程
+		init_scheduler();
+		init_idle_task();
 
 		// init_scheduler();
 		vfs_init();
 		blockDeviceManager_init();
 		init_virtio_bd();
 		do_mount(0, 0, 0, 0, 0);
+		create_init_process();
 	}
 	if (NCPU > 1) sync_barrier(&counter, NCPU);
+
 	pagetable_activate(g_kernel_pagetable);
 	// sync_barrier(&sync_counter, NCPU);
 
@@ -206,8 +223,6 @@ void s_start(uintptr_t hartid, uintptr_t dtb) {
 	kprintf("Switch to user mode...\n");
 	// the application code (elf) is first loaded into memory, and then put into
 	// execution added @lab3_1
-	create_init_process();
-
+	idle_loop();
 	// we should never reach here.
-	return;
 }

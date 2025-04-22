@@ -24,20 +24,9 @@
 
 static void free_kernel_stack(void* kstack);
 
-//
-// switch to a user-mode process
-//
-
-extern void return_to_user(struct trapframe*, uint64 satp);
-
-//
-// allocate an empty process, init its vm space. returns the pointer to
-// process strcuture. added @lab3_1
-//
-task_t* alloc_process() {
+void task_init(task_t* ps) {
 	// locate the first usable process structure
-	task_t* ps = alloc_empty_process();
-	ps->kstack = (uint64)alloc_kernel_stack();
+	ps->kstack = (uint64)kmalloc(PAGE_SIZE);
 	ps->mm = user_alloc_mm();
 	ps->fs = fs_struct_create();
 	ps->fdtable = fdtable_acquire(NULL);
@@ -46,13 +35,15 @@ task_t* alloc_process() {
 	ps->pid = pid_alloc();
 	ps->state;
 	ps->flags;
-	ps->parent;
+	ps->parent = current;
+	ps->tick_count = 0;
 	// ps->pagefault_disabled = 0;
 
-	INIT_LIST_HEAD(&ps->children);
-	INIT_LIST_HEAD(&ps->sibling);
+	INIT_LIST_HEAD(&ps->children_list);
+	INIT_LIST_HEAD(&ps->sibling_list_node);
 	INIT_LIST_HEAD(&ps->ready_queue_node);
-	ps->tick_count = 0;
+	INIT_LIST_HEAD(&ps->wait_queue_node);
+	list_add(&ps->sibling_list_node, &current->children_list);
 
 	// 创建信号量和初始化文件管理
 	// ps->sem_index = sem_new(0);	//这个信号量需要重写
@@ -64,9 +55,10 @@ task_t* alloc_process() {
 	// Default signal actions
 	for (int32 i = 0; i < _NSIG; i++) { ps->sighand[i].sa_handler = SIG_DFL; }
 
-	kprintf("alloc_process: end.\n");
-	return ps;
+	kprintf("task_init: end.\n");
 }
+
+
 
 int32 free_process(task_t* proc) {
 	// 在exit中把进程的状态设成ZOMBIE，然后在父进程wait中调用这个函数，用于释放子进程的资源（待实现）

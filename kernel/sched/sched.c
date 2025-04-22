@@ -30,7 +30,7 @@ void init_scheduler() {
 	kprintf("Scheduler initiated\n");
 }
 
-task_t* alloc_empty_process() {
+task_t* alloc_task() {
 	for (int32 i = 0; i < NPROC; i++) {
 		if (procs[i] == NULL) {
 			procs[i] = (task_t*)kmalloc(sizeof(task_t));

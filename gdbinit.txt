@@ -10,7 +10,7 @@ file build/bin/kernel.elf
 # b _start
 awatch *(uint64_t*)0x0
 display /5i $pc
-# b s_start
+b s_start
 b virtio_disk_rw
 b smode_trap_vector
 b printf

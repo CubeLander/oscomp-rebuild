@@ -17,4 +17,6 @@ static inline void sync_barrier(volatile int32 *counter, int32 all) {
   }
 }
 
+#define memory_barrier() __sync_synchronize()
+
 #endif
