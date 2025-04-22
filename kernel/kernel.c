@@ -150,11 +150,9 @@ void start_trap() {
 }
 
 task_t boot_task;
-struct trapframe boot_trapframe;
 // 这个boot_trapframe应该给每个核都发一个
 void boot_trap_setup(void) {
 	current_percpu[read_tp()] = &boot_task;
-	boot_task.trapframe = &boot_trapframe;
 
 	extern char smode_trap_vector[];
 	write_csr(sstatus, read_csr(sstatus) | SSTATUS_SIE);
@@ -169,9 +167,8 @@ void boot_trap_setup(void) {
 }
 
 //
-// s_start: S-mode entry point of kernel.elf OS kernel.
+// s_start: S-mode entry point of kernel
 //
-volatile static int32 sig = 1;
 volatile static int counter = 0;
 void s_start(uintptr_t hartid, uintptr_t dtb) {
 	// 最重要！先把中断服务程序挂上去，不然崩溃都不知道怎么死的。

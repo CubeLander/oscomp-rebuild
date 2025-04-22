@@ -2,24 +2,11 @@
 
 .global smode_trap_vector
 smode_trap_vector:
-	addi t0, x0, 2
-	csrrs t0, sstatus, t0	# 关中断
+	csrrsi t0, sstatus, 0x2	# 关中断
 	
-	addi t0, x0, 0
-	csrrw t0, sscratch, t0
-	bnez t0, smode_trap_vector_next1
-	csrrs t0, sscratch, t0
-	ld tp , 0(t0)		# 从sscratch中读取
-
-
-smode_trap_vector_next1:
-
-
-
-
-
-
-
+	csrr t0, sscratch
+	ld tp , 0(t0)		# 从sscratch中读取task_struct
+	ld
 
 
 .global save_context
