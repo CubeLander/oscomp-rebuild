@@ -38,6 +38,8 @@ static inline void spinlock_unlock(spinlock_t* lock) {
 	int64 flags = lock->irq_flags;
     atomic_flag_clear(&lock->lock);
 	write_csr(sstatus, flags); 	// 恢复到原来的 SIE (bit 1)
+	// 注意，这里的flags临时变量字段很关键，这能让sstatus正确恢复到之前
+	// 保存的irq_flags，而不被其他线程忙等锁完，冲进来改掉。
 }
 
 #endif
