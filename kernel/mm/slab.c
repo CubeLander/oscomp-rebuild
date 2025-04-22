@@ -6,8 +6,8 @@
  * Used by kmalloc for allocations up to 4KB in size.
  */
 
-#include <kernel/mmu.h>
-#include <kernel/util.h>
+
+#include <kernel.h>
 
 // Slab sizes including allocation headers (8 bytes)
 // These sizes are the total allocation size

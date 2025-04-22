@@ -9,7 +9,7 @@
 
 
 
-typedef struct {
+typedef struct spinlock{
   atomic_flag lock;
 } spinlock_t;
 

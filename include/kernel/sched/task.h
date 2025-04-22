@@ -104,10 +104,11 @@ enum fork_choice {
 
 
 typedef struct task {
-	uint64 thread_flags;
+	trapframe_t* trap_context;
+	trapframe_t* schedule_context;
 	uint64 kernel_sp;
 	uint64 user_sp;
-
+	uint64 thread_flags;
 
 
 
@@ -127,7 +128,7 @@ typedef struct task {
 	uint32 state;
 	uint32 flags;
 	// parent process
-	task_t* parent;
+	struct task* parent;
 	struct list_head children;
 	struct list_head sibling;
 	// ready queue

@@ -1,8 +1,8 @@
-#include <kernel/sched.h>
+
 #include <kernel/vfs.h>
 #include <kernel/syscall/syscall.h>
-#include <kernel/mmu.h>
-#include <kernel/util.h>
+
+#include <kernel.h>
 
 /**
  * 需要注意的是，read动作会自动修改文件中的f_pos偏移量，需要在下层实现中体现出来。

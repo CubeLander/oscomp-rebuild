@@ -1,9 +1,9 @@
 #include <kernel/device/interface.h>
-#include <kernel/util.h>
+#include <kernel.h>
 // #include <lock/mutex.h> // TODO: 暂时不实现 lock / mutex
 // #include <proc/thread.h>
 #include <kernel/riscv.h>
-#include <kernel/mmu.h>
+
 #include <kernel/device/sbi.h>
 #include <kernel/types.h>
 

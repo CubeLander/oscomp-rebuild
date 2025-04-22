@@ -93,7 +93,7 @@ void load_elf_from_file(task_t *proc, char *filename) {
 
   kprintf(
       "Application loaded successfully, entry point (virtual address): 0x%lx\n",
-      proc->trapframe->epc);
+      proc->trap_context->sregs.sepc);
 }
 
 /**
@@ -362,9 +362,9 @@ static void setup_global_pointer(elf_context *ctx) {
     if (sh.name < shstr_section.size &&
         strcmp(shstr_buffer + sh.name, ".sdata") == 0) {
       // 找到.sdata节，设置gp寄存器
-      ctx->proc->trapframe->regs.gp = sh.addr + 0x800;
+      ctx->proc->trap_context->regs.gp = sh.addr + 0x800;
       kprintf("Found .sdata section at 0x%lx, setting gp to 0x%lx\n", sh.addr,
-             ctx->proc->trapframe->regs.gp);
+             ctx->proc->trap_context->regs.gp);
       break;
     }
   }
@@ -444,7 +444,7 @@ static int32 load_elf_binary(elf_context *ctx) {
   setup_global_pointer(ctx);
 
   // 设置进程入口点
-  ctx->proc->trapframe->epc = ctx->entry_point;
+  ctx->proc->trap_context->sregs.sepc = ctx->entry_point;
 
   kprintf("ELF loaded successfully, entry point: 0x%lx\n", ctx->entry_point);
   return 0;
@@ -518,7 +518,7 @@ int32 load_init_binary(task_t *init_task, const char *path) {
     load_debug_information(&ctx);
 
     kprintf("Init binary loaded successfully, entry point: 0x%lx\n", 
-           init_task->trapframe->epc);
+           init_task->trap_context->sregs.sepc);
 
 out:
     // Close the file

@@ -2,177 +2,211 @@
 
 .global smode_trap_vector
 smode_trap_vector:
-	csrrsi t0, sstatus, 0x2	# 关中断
-	
-	csrr t0, sscratch
-	ld tp , 0(t0)		# 从sscratch中读取task_struct
-	ld
+
+	/*save context*/
+	csrr t2, sscratch		// t2 = cpuinfo_t cpuinfo
+	ld t1, 0(t2)			// t1 = cpuinfo->current_task
+	ld t0, 0(t1)			// t0 = current_task->trap_context
+	call save_trapframe		// save_trapframe(t0)
+	/*restore kernel sp*/
+	csrr t3, sstatus
+	andi t3, t3, 0x100		// SSTATUS_SPP
+	bnez t3, from_kernel
+	// from user
+	ld sp, 16(t1)			// 恢复内核栈
+from_kernel:
+	/*the main trap handler logic*/
+	call kernel_trap_handler
+.global return_to_context
+return_to_context:
+	/*restore context*/
+	csrr t2, sscratch		// t2 = cpuinfo_t cpuinfo
+	ld t1, 0(t2)			// t1 = cpuinfo->current_task
+	ld t0, 0(t1)			// t0 = current_task->trap_context
+	call restore_trapframe
+	/*开中断*/
+	csrr t0, sstatus
+	ori t0, t0, 0x2
+	csrw sstatus, t0
+	sret
 
 
-.global save_context
-save_context:
-    addi sp, sp, -576        # 留出栈空间（35 + 32 个寄存器 × 8 字节）
 
-    # 保存 CSR
-    csrr t0, sepc
-    sd   t0, 0(sp)
-    csrr t0, sstatus
-    sd   t0, 256(sp)
-    csrr t0, stval
-    sd   t0, 264(sp)
-    csrr t0, scause
-    sd   t0, 272(sp)
 
-    sd a0, 280(sp)           # orig_a0（保存调用时的 a0）
 
-    # 保存整数寄存器
-    sd ra,   8(sp)
-    sd gp,  24(sp)
-    sd tp,  32(sp)
-    sd t0,  40(sp)
-    sd t1,  48(sp)
-    sd t2,  56(sp)
-    sd s0,  64(sp)
-    sd s1,  72(sp)
-    sd a0,  80(sp)
-    sd a1,  88(sp)
-    sd a2,  96(sp)
-    sd a3, 104(sp)
-    sd a4, 112(sp)
-    sd a5, 120(sp)
-    sd a6, 128(sp)
-    sd a7, 136(sp)
-    sd s2, 144(sp)
-    sd s3, 152(sp)
-    sd s4, 160(sp)
-    sd s5, 168(sp)
-    sd s6, 176(sp)
-    sd s7, 184(sp)
-    sd s8, 192(sp)
-    sd s9, 200(sp)
-    sd s10, 208(sp)
-    sd s11, 216(sp)
-    sd t3, 224(sp)
-    sd t4, 232(sp)
-    sd t5, 240(sp)
-    sd t6, 248(sp)
-    sd sp,  16(sp)           # 注意最后保存的 sp 是原始 sp（不是新的）
 
-    # 保存 FPU
-    fsd ft0,  288(sp)
-    fsd ft1,  296(sp)
-    fsd ft2,  304(sp)
-    fsd ft3,  312(sp)
-    fsd ft4,  320(sp)
-    fsd ft5,  328(sp)
-    fsd ft6,  336(sp)
-    fsd ft7,  344(sp)
-    fsd fs0,  352(sp)
-    fsd fs1,  360(sp)
-    fsd fa0,  368(sp)
-    fsd fa1,  376(sp)
-    fsd fa2,  384(sp)
-    fsd fa3,  392(sp)
-    fsd fa4,  400(sp)
-    fsd fa5,  408(sp)
-    fsd fa6,  416(sp)
-    fsd fa7,  424(sp)
-    fsd fs2,  432(sp)
-    fsd fs3,  440(sp)
-    fsd fs4,  448(sp)
-    fsd fs5,  456(sp)
-    fsd fs6,  464(sp)
-    fsd fs7,  472(sp)
-    fsd fs8,  480(sp)
-    fsd fs9,  488(sp)
-    fsd fs10, 496(sp)
-    fsd fs11, 504(sp)
-    fsd ft8,  512(sp)
-    fsd ft9,  520(sp)
-    fsd ft10, 528(sp)
-    fsd ft11, 536(sp)
+
+
+
+
+.global save_trapframe
+save_trapframe:
+    // Save GPRs (x0–x31)
+    sd x0,   0(t0)
+    sd ra,   8(t0)
+    sd sp,  16(t0)
+    sd gp,  24(t0)
+    sd tp,  32(t0)
+    sd t0,  40(t0)
+    sd t1,  48(t0)
+    sd t2,  56(t0)
+    sd s0,  64(t0)
+    sd s1,  72(t0)
+    sd a0,  80(t0)
+    sd a1,  88(t0)
+    sd a2,  96(t0)
+    sd a3, 104(t0)
+    sd a4, 112(t0)
+    sd a5, 120(t0)
+    sd a6, 128(t0)
+    sd a7, 136(t0)
+    sd s2, 144(t0)
+    sd s3, 152(t0)
+    sd s4, 160(t0)
+    sd s5, 168(t0)
+    sd s6, 176(t0)
+    sd s7, 184(t0)
+    sd s8, 192(t0)
+    sd s9, 200(t0)
+    sd s10,208(t0)
+    sd s11,216(t0)
+    sd t3, 224(t0)
+    sd t4, 232(t0)
+    sd t5, 240(t0)
+    sd t6, 248(t0)
+
+    // Save CSR: offset = 256+
+    csrr t1, sstatus
+    sd t1, 256(t0)
+    csrr t1, stvec
+    sd t1, 264(t0)
+    csrr t1, sepc
+    sd t1, 272(t0)
+    csrr t1, scause
+    sd t1, 280(t0)
+    csrr t1, stval
+    sd t1, 288(t0)
+    csrr t1, satp
+    sd t1, 296(t0)
+
+    // Save FPU: f0–f31, offset = 304+
+    fsd f0,  304(t0)
+    fsd f1,  312(t0)
+    fsd f2,  320(t0)
+    fsd f3,  328(t0)
+    fsd f4,  336(t0)
+    fsd f5,  344(t0)
+    fsd f6,  352(t0)
+    fsd f7,  360(t0)
+    fsd f8,  368(t0)
+    fsd f9,  376(t0)
+    fsd f10, 384(t0)
+    fsd f11, 392(t0)
+    fsd f12, 400(t0)
+    fsd f13, 408(t0)
+    fsd f14, 416(t0)
+    fsd f15, 424(t0)
+    fsd f16, 432(t0)
+    fsd f17, 440(t0)
+    fsd f18, 448(t0)
+    fsd f19, 456(t0)
+    fsd f20, 464(t0)
+    fsd f21, 472(t0)
+    fsd f22, 480(t0)
+    fsd f23, 488(t0)
+    fsd f24, 496(t0)
+    fsd f25, 504(t0)
+    fsd f26, 512(t0)
+    fsd f27, 520(t0)
+    fsd f28, 528(t0)
+    fsd f29, 536(t0)
+    fsd f30, 544(t0)
+    fsd f31, 552(t0)
 
     ret
 
 
-.global restore_context
-restore_context:
-    # 恢复 FPU
-    fld ft0,  288(sp)
-    fld ft1,  296(sp)
-    fld ft2,  304(sp)
-    fld ft3,  312(sp)
-    fld ft4,  320(sp)
-    fld ft5,  328(sp)
-    fld ft6,  336(sp)
-    fld ft7,  344(sp)
-    fld fs0,  352(sp)
-    fld fs1,  360(sp)
-    fld fa0,  368(sp)
-    fld fa1,  376(sp)
-    fld fa2,  384(sp)
-    fld fa3,  392(sp)
-    fld fa4,  400(sp)
-    fld fa5,  408(sp)
-    fld fa6,  416(sp)
-    fld fa7,  424(sp)
-    fld fs2,  432(sp)
-    fld fs3,  440(sp)
-    fld fs4,  448(sp)
-    fld fs5,  456(sp)
-    fld fs6,  464(sp)
-    fld fs7,  472(sp)
-    fld fs8,  480(sp)
-    fld fs9,  488(sp)
-    fld fs10, 496(sp)
-    fld fs11, 504(sp)
-    fld ft8,  512(sp)
-    fld ft9,  520(sp)
-    fld ft10, 528(sp)
-    fld ft11, 536(sp)
+.global restore_trapframe
+restore_trapframe:
+    // Restore GPRs (x1–x31)
+    ld ra,   8(t0)
+    ld sp,  16(t0)
+    ld gp,  24(t0)
+    ld tp,  32(t0)
+    ld t0,  40(t0)     // 小心这里 t0 会变，但现在正好用完
+    ld t1,  48(t0)
+    ld t2,  56(t0)
+    ld s0,  64(t0)
+    ld s1,  72(t0)
+    ld a0,  80(t0)
+    ld a1,  88(t0)
+    ld a2,  96(t0)
+    ld a3, 104(t0)
+    ld a4, 112(t0)
+    ld a5, 120(t0)
+    ld a6, 128(t0)
+    ld a7, 136(t0)
+    ld s2, 144(t0)
+    ld s3, 152(t0)
+    ld s4, 160(t0)
+    ld s5, 168(t0)
+    ld s6, 176(t0)
+    ld s7, 184(t0)
+    ld s8, 192(t0)
+    ld s9, 200(t0)
+    ld s10,208(t0)
+    ld s11,216(t0)
+    ld t3, 224(t0)
+    ld t4, 232(t0)
+    ld t5, 240(t0)
+    ld t6, 248(t0)
 
-    # 恢复 CSR
-    ld t0,  0(sp)
-    csrw sepc, t0
-    ld t0, 256(sp)
-    csrw sstatus, t0
-    ld t0, 264(sp)
-    csrw stval, t0
-    ld t0, 272(sp)
-    csrw scause, t0
+    // Restore CSR: offset 256+
+    ld t1, 256(t0)
+    csrw sstatus, t1
+    ld t1, 264(t0)
+    csrw stvec, t1
+    ld t1, 272(t0)
+    csrw sepc, t1
+    ld t1, 280(t0)
+    csrw scause, t1
+    ld t1, 288(t0)
+    csrw stval, t1
+    ld t1, 296(t0)
+    csrw satp, t1
 
-    # 恢复通用寄存器
-    ld ra,   8(sp)
-    ld gp,  24(sp)
-    ld tp,  32(sp)
-    ld t0,  40(sp)
-    ld t1,  48(sp)
-    ld t2,  56(sp)
-    ld s0,  64(sp)
-    ld s1,  72(sp)
-    ld a0,  80(sp)
-    ld a1,  88(sp)
-    ld a2,  96(sp)
-    ld a3, 104(sp)
-    ld a4, 112(sp)
-    ld a5, 120(sp)
-    ld a6, 128(sp)
-    ld a7, 136(sp)
-    ld s2, 144(sp)
-    ld s3, 152(sp)
-    ld s4, 160(sp)
-    ld s5, 168(sp)
-    ld s6, 176(sp)
-    ld s7, 184(sp)
-    ld s8, 192(sp)
-    ld s9, 200(sp)
-    ld s10, 208(sp)
-    ld s11, 216(sp)
-    ld t3, 224(sp)
-    ld t4, 232(sp)
-    ld t5, 240(sp)
-    ld t6, 248(sp)
-    ld sp,  16(sp)      # 恢复原始栈指针
+    // Restore FPRs f0–f31
+    fld f0,  304(t0)
+    fld f1,  312(t0)
+    fld f2,  320(t0)
+    fld f3,  328(t0)
+    fld f4,  336(t0)
+    fld f5,  344(t0)
+    fld f6,  352(t0)
+    fld f7,  360(t0)
+    fld f8,  368(t0)
+    fld f9,  376(t0)
+    fld f10, 384(t0)
+    fld f11, 392(t0)
+    fld f12, 400(t0)
+    fld f13, 408(t0)
+    fld f14, 416(t0)
+    fld f15, 424(t0)
+    fld f16, 432(t0)
+    fld f17, 440(t0)
+    fld f18, 448(t0)
+    fld f19, 456(t0)
+    fld f20, 464(t0)
+    fld f21, 472(t0)
+    fld f22, 480(t0)
+    fld f23, 488(t0)
+    fld f24, 496(t0)
+    fld f25, 504(t0)
+    fld f26, 512(t0)
+    fld f27, 520(t0)
+    fld f28, 528(t0)
+    fld f29, 536(t0)
+    fld f30, 544(t0)
+    fld f31, 552(t0)
 
-    addi sp, sp, 576    # 回滚整个上下文栈
     ret

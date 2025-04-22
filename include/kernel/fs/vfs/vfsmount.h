@@ -2,7 +2,7 @@
 #define _VFSMOUNT_H
 
 #include "forward_declarations.h"
-#include <kernel/util.h>
+#include <kernel.h>
 
 /**
  * Mount point structure

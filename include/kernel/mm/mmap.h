@@ -29,9 +29,9 @@ struct file;
 
 int32 do_unmap(struct mm_struct *mm, uint64 start, size_t len);
 uint64 do_brk(struct mm_struct *mm, uint64 new_brk);
-int32 do_protect(struct mm_struct *mm, __page_aligned uint64 start, size_t len, int32 prot);
+int32 do_protect(struct mm_struct *mm, uint64 start, size_t len, int32 prot);
 uint64 find_free_area(struct mm_struct *mm, size_t length);
-
+uint64 mmap_file(struct mm_struct* mm, uint64 addr, size_t length, int32 prot, uint64 flags, struct file* file, off_t pgoff);
 
 
 

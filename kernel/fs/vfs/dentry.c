@@ -1,9 +1,8 @@
-#include <kernel/mmu.h>
-#include <kernel/sched.h>
-#include <kernel/util/print.h>
+#include <kernel.h>
+#include <kernel.h>
 #include <kernel/time.h>
 #include <kernel/types.h>
-#include <kernel/util.h>
+#include <kernel.h>
 #include <kernel/vfs.h>
 
 /* Dentry cache hashtable */
@@ -22,6 +21,25 @@ struct dentry_key {
 	struct dentry* parent;   /* 父目录项 */
 	const struct qstr* name; /* 名称 */
 };
+
+
+bool dentry_isDir(const struct dentry* dentry) {
+	if (!dentry || !dentry->d_inode) return false;
+	return S_ISDIR(dentry->d_inode->i_mode);
+}
+
+bool dentry_isSymlink(const struct dentry* dentry) {
+	if (!dentry || !dentry->d_inode) return false;
+	return S_ISLNK(dentry->d_inode->i_mode);
+}
+
+bool dentry_isMountpoint(const struct dentry* dentry) {
+	if (!dentry) return false;
+	return (dentry->d_flags & DCACHE_MOUNTED) != 0;
+}
+
+
+
 
 /**
  * 强化版dentry获取接口 - 集成查找与创建功能

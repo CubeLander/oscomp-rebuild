@@ -1,7 +1,7 @@
-#include <kernel/mmu.h>
-#include <kernel/sched.h>
+
+
 #include <kernel/syscall/syscall.h>
-#include <kernel/util.h>
+#include <kernel.h>
 #include <kernel/vfs.h>
 
 int64 sys_mmap(void* addr, size_t length, int32 prot, int32 flags, int32 fd, off_t offset) {

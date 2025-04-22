@@ -1,7 +1,7 @@
 #include <kernel/types.h>
-#include <kernel/util.h>
+#include <kernel.h>
 #include <kernel/vfs.h>
-#include <kernel/mmu.h>
+
 
 /* Global mount list */
 struct list_head mount_list;

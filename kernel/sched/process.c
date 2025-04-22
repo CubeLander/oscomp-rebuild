@@ -10,9 +10,9 @@
 #include <kernel/config.h>
 #include <kernel/elf.h>
 
-#include <kernel/mmu.h>
+
 #include <kernel/riscv.h>
-#include <kernel/sched.h>
+
 #include <kernel/strap.h>
 #include <kernel/vfs.h>
 
@@ -78,7 +78,7 @@ int32 free_process(task_t* proc) {
 ssize_t do_wait(int32 pid) {
 	// kprintf("DEBUG LINE, pid = %d\n",pid);
 	extern task_t* procs[NPROC];
-	int32 hartid = read_tp();
+	
 	// int32 child_found_flag = 0;
 	if (pid == -1) {
 		while (1) {

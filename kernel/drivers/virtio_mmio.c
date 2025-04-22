@@ -11,7 +11,7 @@
 #include <kernel/drivers/virtio_mmio.h>
 #include <kernel/mm/pagetable.h>
 #include <kernel/riscv.h>
-#include <kernel/util.h>
+#include <kernel.h>
 #include <kernel/vfs.h>
 
 // the address of virtio mmio register r.

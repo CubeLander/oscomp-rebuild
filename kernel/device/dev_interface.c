@@ -4,7 +4,7 @@
 // #include <dev/uart.h>
 // #include <dev/virtio.h>
 // #include <fs/buf.h>
-#include <kernel/util.h>
+#include <kernel.h>
 
 // void dev_test() {
 // #ifdef FEATURE_DISK_SD

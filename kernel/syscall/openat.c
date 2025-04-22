@@ -1,7 +1,7 @@
-#include <kernel/mmu.h>
-#include <kernel/sched.h>
+
+
 #include <kernel/syscall/syscall.h>
-#include <kernel/util.h>
+#include <kernel.h>
 #include <kernel/vfs.h>
 
 /* Syscall implementation for openat */

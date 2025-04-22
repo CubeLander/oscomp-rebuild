@@ -1,8 +1,8 @@
-#include <kernel/mmu.h>
-#include <kernel/sched.h>
+
+
 #include <kernel/util/print.h>
 #include <kernel/types.h>
-#include <kernel/util.h>
+#include <kernel.h>
 #include <kernel/vfs.h>
 
 /**

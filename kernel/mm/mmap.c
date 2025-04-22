@@ -1,6 +1,6 @@
 #include <kernel/types.h>
-#include <kernel/mmu.h>
-#include <kernel/util.h>			//memset
+
+#include <kernel.h>			//memset
 
 /**
  * 将保护标志(PROT_*)转换为页表项标志
@@ -381,7 +381,7 @@ uint64 do_brk(struct mm_struct *mm, uint64 new_brk) {
  *
  * Return: 0 on success, negative error code on failure
  */
-int32 do_protect(struct mm_struct *mm, __page_aligned uint64 start, size_t len, int32 prot) {
+int32 do_protect(struct mm_struct *mm,  uint64 start, size_t len, int32 prot) {
 	uint64 end;
 	struct vm_area_struct *vma;
 	uint64 current_addr;

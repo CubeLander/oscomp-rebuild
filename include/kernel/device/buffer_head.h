@@ -2,7 +2,7 @@
 #define _BUFFER_HEAD_H
 #include <kernel/device/blockdevice.h>
 #include <kernel/types.h>
-#include <kernel/util.h>
+#include <kernel.h>
 
 /* Buffer states (b_state) */
 enum {

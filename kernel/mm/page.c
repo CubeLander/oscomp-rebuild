@@ -1,7 +1,7 @@
 #include <kernel/boot/dtb.h>
 #include <kernel/config.h>
-#include <kernel/mmu.h>
-#include <kernel/util.h>
+
+#include <kernel.h>
 
 // 页结构数组，用于跟踪所有物理页
 static struct page* page_pool = NULL;

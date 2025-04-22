@@ -1,8 +1,8 @@
 
-#include <kernel/vfs.h>
+#include <kernel.h>
 #include <kernel/mm/kmalloc.h>
-#include <kernel/sched.h>
-#include <kernel/util/print.h>
+
+#include <kernel.h>
 #include <kernel/types.h>
 #include <kernel/util/string.h>
 

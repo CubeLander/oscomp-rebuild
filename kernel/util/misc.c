@@ -1,6 +1,6 @@
 #include <kernel/types.h>
-#include <kernel/mmu.h>
-#include <kernel/util.h> 
+
+#include <kernel.h> 
 
 int ffs(int x)
 {

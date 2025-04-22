@@ -10,7 +10,11 @@
 		"blockdevice.h": "c",
 		"buffer_head.h": "c",
 		"virtio_device.h": "c",
-		"virtio_mmio.h": "c"
+		"virtio_mmio.h": "c",
+		"cpu.h": "c",
+		"plic.h": "c",
+		"time.h": "c",
+		"memlayout.h": "c"
 	},
 }
 

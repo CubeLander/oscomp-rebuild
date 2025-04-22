@@ -2,23 +2,22 @@
  * Utility functions for trap handling in Supervisor mode.
  */
 
-#include <kernel/mmu.h>
+
 #include <kernel/riscv.h>
-#include <kernel/sched.h>
 #include <kernel/strap.h>
 #include <kernel/syscall/syscall.h>
 #include <kernel/time.h>
-#include <kernel/util.h>
+#include <kernel.h>
 #include <kernel/drivers/virtio_mmio.h>
 #include <kernel/drivers/plic.h>
+#include <kernel.h>
+#include <kernel/trapframe.h>
 
 //
 // handling the syscalls. will call do_syscall() defined in kernel/syscall.c
 //
-static void handle_syscall(struct trapframe* tf) {
-
-	tf->epc += 4;
-
+static void handle_syscall(trapframe_t* tf) {
+	tf->sregs.sepc += 4;
 	tf->regs.a0 = do_syscall(tf->regs.a7, tf->regs.a0, tf->regs.a1, tf->regs.a2, tf->regs.a3, tf->regs.a4, tf->regs.a5);
 }
 
@@ -27,12 +26,10 @@ static void handle_syscall(struct trapframe* tf) {
 //
 void handle_mtimer_trap() {
 	kprintf("Ticks %d\n", jiffies);
-	int32 hartid = read_tp();
 	if (hartid == 0) {
 		jiffies++;
 	}
 	current->tick_count++;
-
 	write_csr(sip, read_csr(sip) & ~SIP_SSIP);
 }
 
@@ -158,13 +155,12 @@ error:
 // implements round-robin scheduling. added @lab3_3
 //
 void rrsched() {
-	int32 hartid = read_tp();
 	if (current->tick_count >= TIME_SLICE_LEN) {
 		current->tick_count = 0;
 	}
 }
 
-void external_trap_handler(struct trapframe* tf) {
+void external_trap_handler() {
 	kprintf("external_trap_handler: start\n");
 	int irq = plic_claim();
 	switch (irq) {
@@ -187,13 +183,12 @@ void external_trap_handler(struct trapframe* tf) {
  * 当在内核模式下发生异常或中断时被调用
  */
 void kernel_trap_handler() {
-	uint64 cause = read_csr(scause);
-	uint64 epc = read_csr(sepc);
+	uint64 scause = read_csr(scause);
+	uint64 sepc = read_csr(sepc);
 	uint64 stval = read_csr(stval);
-	kprintf("")
 	// 检查是否是中断（最高位为1表示中断）
-	if (cause & (1ULL << 63)) {
-		uint64 interrupt_cause = cause & ~(1ULL << 63); // 去掉最高位获取中断类型
+	if (scause & (1ULL << 63)) {
+		uint64 interrupt_cause = scause & ~(1ULL << 63); // 去掉最高位获取中断类型
 
 		// 处理不同类型的中断
 		switch (interrupt_cause) {
@@ -207,7 +202,7 @@ void kernel_trap_handler() {
 			break;
 		case IRQ_S_EXT:
 			kprintf("内核中断: IRQ_S_EXT (S模式外部中断)\n");
-			external_trap_handler(tf);
+			external_trap_handler();
 			// 处理外部中断
 			break;
 		default:
@@ -216,81 +211,81 @@ void kernel_trap_handler() {
 		}
 	} else {
 		// 处理异常（非中断）
-		switch (cause) {
+		switch (scause) {
 		case CAUSE_MISALIGNED_FETCH:
 			kprintf("内核异常: CAUSE_MISALIGNED_FETCH (取指未对齐)\n");
-			kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
+			kprintf("  sepc = 0x%lx, stval = 0x%lx\n", sepc, stval);
 			panic("内核异常: 取指未对齐");
 			break;
 		case CAUSE_FETCH_ACCESS:
 			kprintf("内核异常: CAUSE_FETCH_ACCESS (取指访问错误)\n");
-			kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
+			kprintf("  sepc = 0x%lx, stval = 0x%lx\n", sepc, stval);
 			panic("内核异常: 取指访问错误");
 			break;
 		case CAUSE_ILLEGAL_INSTRUCTION:
 			kprintf("内核异常: CAUSE_ILLEGAL_INSTRUCTION (非法指令)\n");
-			kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
+			kprintf("  sepc = 0x%lx, stval = 0x%lx\n", sepc, stval);
 			panic("内核异常: 非法指令");
 			break;
 		case CAUSE_BREAKPOINT:
 			kprintf("内核异常: CAUSE_BREAKPOINT (断点)\n");
-			kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
+			kprintf("  sepc = 0x%lx, stval = 0x%lx\n", sepc, stval);
 			// 可以选择不panic，而是处理断点
 			break;
 		case CAUSE_MISALIGNED_LOAD:
 			kprintf("内核异常: CAUSE_MISALIGNED_LOAD (加载未对齐)\n");
-			kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
+			kprintf("  sepc = 0x%lx, stval = 0x%lx\n", sepc, stval);
 			panic("内核异常: 加载未对齐");
 			break;
 		case CAUSE_LOAD_ACCESS:
 			kprintf("内核异常: CAUSE_LOAD_ACCESS (加载访问错误)\n");
-			kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
+			kprintf("  sepc = 0x%lx, stval = 0x%lx\n", sepc, stval);
 			panic("内核异常: 加载访问错误");
 			break;
 		case CAUSE_MISALIGNED_STORE:
 			kprintf("内核异常: CAUSE_MISALIGNED_STORE (存储未对齐)\n");
-			kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
+			kprintf("  sepc = 0x%lx, stval = 0x%lx\n", sepc, stval);
 			panic("内核异常: 存储未对齐");
 			break;
 		case CAUSE_STORE_ACCESS:
 			kprintf("内核异常: CAUSE_STORE_ACCESS (存储访问错误)\n");
-			kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
+			kprintf("  sepc = 0x%lx, stval = 0x%lx\n", sepc, stval);
 			panic("内核异常: 存储访问错误");
 			break;
 		case CAUSE_USER_ECALL:
 			kprintf("内核异常: CAUSE_USER_ECALL (用户态系统调用)\n");
-			kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
+			kprintf("  sepc = 0x%lx, stval = 0x%lx\n", sepc, stval);
 			// 这通常不应该在内核模式下发生
 			panic("内核异常: 不应该在内核模式收到用户态系统调用");
 			break;
 		case CAUSE_SUPERVISOR_ECALL:
 			kprintf("内核异常: CAUSE_SUPERVISOR_ECALL (内核态系统调用)\n");
-			kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
+			kprintf("  sepc = 0x%lx, stval = 0x%lx\n", sepc, stval);
 			// 处理内核态系统调用
 			break;
 		case CAUSE_MACHINE_ECALL:
 			kprintf("内核异常: CAUSE_MACHINE_ECALL (机器态系统调用)\n");
-			kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
+			kprintf("  sepc = 0x%lx, stval = 0x%lx\n", sepc, stval);
 			panic("内核异常: 机器态系统调用");
 			break;
 		case CAUSE_FETCH_PAGE_FAULT:
 			kprintf("内核异常: CAUSE_FETCH_PAGE_FAULT (取指页错误)\n");
-			kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
+			kprintf("  sepc = 0x%lx, stval = 0x%lx\n", sepc, stval);
 			panic("内核异常: 取指页错误");
 			break;
 		case CAUSE_LOAD_PAGE_FAULT:
 			kprintf("内核异常: CAUSE_LOAD_PAGE_FAULT (加载页错误)\n");
-			kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
+			kprintf("  sepc = 0x%lx, stval = 0x%lx\n", sepc, stval);
 			panic("内核异常: 加载页错误");
 			break;
 		case CAUSE_STORE_PAGE_FAULT:
 			kprintf("内核异常: CAUSE_STORE_PAGE_FAULT (存储页错误)\n");
-			kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
+			kprintf("  sepc = 0x%lx, stval = 0x%lx\n", sepc, stval);
 			panic("内核异常: 存储页错误");
 			break;
 		default:
-			kprintf("内核异常: 未知类型 (代码: %p)\n", cause);
-			kprintf("  epc = 0x%lx, stval = 0x%lx\n", epc, stval);
+			kprintf("内核异常: 未知类型 (代码: %p)\n", scause);
+			kprintf("  sepc = 0x%lx, stval = 0x%lx\n", sepc, stval);
 			panic("内核异常: 未知类型");
 			break;
 		}
@@ -301,23 +296,15 @@ void kernel_trap_handler() {
 // kernel/smode_trap.S will pass control to smode_trap_handler, when a trap
 // happens in S-mode.
 //
-void user_trap_handler(struct trapframe* tf) {
-	int32 hartid = read_tp();
-	// make sure we are in User mode before entering the trap handling.
-	// we will consider other previous case in lab1_3 (interrupt).
-
-	assert(current);
-	// save user process counter.
-	current->trapframe->epc = read_csr(sepc);
-
-	// if the cause of trap is syscall from user application.
+void user_trap_handler() {
+	// if the scause of trap is syscall from user application.
 	// read_csr() and CAUSE_USER_ECALL are macros defined in kernel/riscv.h
-	uint64 cause = read_csr(scause);
+	uint64 scause = read_csr(scause);
 
 	// use switch-case instead of if-else, as there are many cases since lab2_3.
-	switch (cause) {
+	switch (scause) {
 	case CAUSE_USER_ECALL:
-		handle_syscall(current->trapframe);
+		handle_syscall(current->trap_context);
 		// kprintf("coming back from syscall\n");
 		break;
 	case CAUSE_MTIMER_S_TRAP:
@@ -329,7 +316,7 @@ void user_trap_handler(struct trapframe* tf) {
 	case CAUSE_LOAD_PAGE_FAULT:
 		// the address of missing page is stored in stval
 		// call handle_user_page_fault to process page faults
-		handle_user_page_fault(cause, read_csr(sepc), read_csr(stval));
+		handle_user_page_fault(scause, read_csr(sepc), read_csr(stval));
 		break;
 	default:
 		kprintf("smode_trap_handler(): unexpected scause %p\n", read_csr(scause));
@@ -338,8 +325,4 @@ void user_trap_handler(struct trapframe* tf) {
 		break;
 	}
 	write_csr(sstatus, read_csr(sstatus) | SSTATUS_SIE);
-
-	// kprintf("calling switch_to, current = 0x%x\n", current);
-	// continue (come back to) the execution of current process.
-	switch_to(current);
 }

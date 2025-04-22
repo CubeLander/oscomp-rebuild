@@ -1,8 +1,8 @@
-#include <kernel/sched.h>
+
 #include <kernel/types.h>
-#include <kernel/util.h>
+#include <kernel.h>
 #include <kernel/util/print.h>
-#include <kernel/mmu.h>
+
 
 /* Global variable to track the signal that caused an interrupt */
 int32 g_signal_pending = 0;

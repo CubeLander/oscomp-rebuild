@@ -154,8 +154,8 @@ static inline unsigned long read_tp(void) {
 // write tp, the thread pointer, holding hartid (core number), the index into cpus[].
 static inline void write_tp(unsigned long x) { asm volatile("mv tp, %0" : : "r"(x)); }
 
-typedef struct ptrace_regs {
-	unsigned long epc;        /*  0 */
+typedef struct registers {
+	unsigned long x0;		  /*  0 */		/*x0恒为零，但是为了结构工整，形式上也保存它*/
 	unsigned long ra;         /*  8 */
 	unsigned long sp;         /* 16 */
 	unsigned long gp;         /* 24 */
@@ -187,94 +187,58 @@ typedef struct ptrace_regs {
 	unsigned long t4;         /* 232 */
 	unsigned long t5;         /* 240 */
 	unsigned long t6;         /* 248 */
-	/* Supervisor/Machine CSRs */
-	unsigned long status;     /* 256 */
-	unsigned long badaddr;    /* 264 */
-	unsigned long cause;      /* 272 */
-	unsigned long orig_a0;    /* 280 */
-	unsigned long ft0;
-	unsigned long ft1;
-	unsigned long ft2;
-	unsigned long ft3;
-	unsigned long ft4;
-	unsigned long ft5;
-	unsigned long ft6;
-	unsigned long ft7;
-	unsigned long fs0;
-	unsigned long fs1;
-	unsigned long fa0;
-	unsigned long fa1;
-	unsigned long fa2;
-	unsigned long fa3;
-	unsigned long fa4;
-	unsigned long fa5;
-	unsigned long fa6;
-	unsigned long fa7;
-	unsigned long fs2;
-	unsigned long fs3;
-	unsigned long fs4;
-	unsigned long fs5;
-	unsigned long fs6;
-	unsigned long fs7;
-	unsigned long fs8;
-	unsigned long fs9;
-	unsigned long fs10;
-	unsigned long fs11;
-	unsigned long ft8;
-	unsigned long ft9;
-	unsigned long ft10;
-	unsigned long ft11;
-} regs_t;
+} registers_t;
 
-#define PT_EPC      0
-#define PT_RA       8
-#define PT_SP       16
-#define PT_GP       24
-#define PT_TP       32
-#define PT_T0       40
-#define PT_T1       48
-#define PT_T2       56
-#define PT_S0       64
-#define PT_S1       72
-#define PT_A0       80
-#define PT_A1       88
-#define PT_A2       96
-#define PT_A3       104
-#define PT_A4       112
-#define PT_A5       120
-#define PT_A6       128
-#define PT_A7       136
-#define PT_S2       144
-#define PT_S3       152
-#define PT_S4       160
-#define PT_S5       168
-#define PT_S6       176
-#define PT_S7       184
-#define PT_S8       192
-#define PT_S9       200
-#define PT_S10      208
-#define PT_S11      216
-#define PT_T3       224
-#define PT_T4       232
-#define PT_T5       240
-#define PT_T6       248
+typedef struct s_registers{
+	unsigned long sstatus;	/*256*/
+	unsigned long stvec;
+	unsigned long sepc;
+	unsigned long scause;
+	unsigned long stval;
+	unsigned long satp;
+} s_registers_t;
 
-#define PT_STATUS   256
-#define PT_BADADDR  264
-#define PT_CAUSE    272
-#define PT_ORIG_A0  280
-#define PT_SIZE_ON_STACK  288
+typedef struct float_registers {
+    double f0;   // ft0
+    double f1;   // ft1
+    double f2;   // ft2
+    double f3;   // ft3
+    double f4;   // ft4
+    double f5;   // ft5
+    double f6;   // ft6
+    double f7;   // ft7
+    double f8;   // fs0
+    double f9;   // fs1
+    double f10;  // fa0
+    double f11;  // fa1
+    double f12;  // fa2
+    double f13;  // fa3
+    double f14;  // fa4
+    double f15;  // fa5
+    double f16;  // fa6
+    double f17;  // fa7
+    double f18;  // fs2
+    double f19;  // fs3
+    double f20;  // fs4
+    double f21;  // fs5
+    double f22;  // fs6
+    double f23;  // fs7
+    double f24;  // fs8
+    double f25;  // fs9
+    double f26;  // fs10
+    double f27;  // fs11
+    double f28;  // ft8
+    double f29;  // ft9
+    double f30;  // ft10
+    double f31;  // ft11
+} float_registers_t;
+
 
 
 
 // following lines are added @lab2_1
 static inline void flush_tlb(void) { asm volatile("sfence.vma zero, zero"); }
 #define PAGE_SIZE 4096  // bytes per page
-/* 
- * Mark parameters that must be page-aligned.
- * For documentation and static analysis.
- */
-#define __page_aligned
 
 
 // extract the property bits of a pte

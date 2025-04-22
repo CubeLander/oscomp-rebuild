@@ -8,12 +8,12 @@
 #include <kernel/device/sbi.h>
 #include <kernel/drivers/virtio_device.h>
 #include <kernel/elf.h>
-#include <kernel/mmu.h>
+
 #include <kernel/riscv.h>
-#include <kernel/sched.h>
+
 #include <kernel/syscall/syscall.h>
 #include <kernel/types.h>
-#include <kernel/util.h>
+#include <kernel.h>
 #include <kernel/vfs.h>
 #include <stdio.h>
 
@@ -157,11 +157,8 @@ void boot_trap_setup(void) {
 	extern char smode_trap_vector[];
 	write_csr(sstatus, read_csr(sstatus) | SSTATUS_SIE);
 	write_csr(stvec, (uint64)smode_trap_vector);
-	write_csr(sscratch, (uint64)&boot_trapframe);
 	write_csr(sie, read_csr(sie) | SIE_SEIE | SIE_STIE | SIE_SSIE);
 	uint64 ksp = read_reg(sp);
-	boot_trapframe.kernel_sp = ROUNDUP(ksp, PAGE_SIZE);
-	boot_trapframe.kernel_schedule = (uint64)schedule;
 
 	return;
 }
@@ -198,8 +195,6 @@ void s_start(uintptr_t hartid, uintptr_t dtb) {
 		blockDeviceManager_init();
 		init_virtio_bd();
 		do_mount(0, 0, 0, 0, 0);
-		extern void init_idle_task(void);
-		init_idle_task();
 	}
 	if (NCPU > 1) sync_barrier(&counter, NCPU);
 	pagetable_activate(g_kernel_pagetable);

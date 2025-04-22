@@ -2,15 +2,13 @@
 #define _SCHED_H_
 
 #include <kernel/sched/task.h>
+#include <kernel/sched/cpu.h>
+#include <kernel/riscv.h>
 // kernel.elf kernel supports at most 32 processes
 #define NPROC 32
 #define TIME_SLICE_LEN  2
-extern task_t* current_percpu[NCPU];
 
 
-
-
-#define current (current_percpu[read_tp()])
 
 void init_scheduler();
 void insert_to_ready_queue( task_t* proc );

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <kernel/types.h>
-#include <kernel/util.h>
+#include <kernel.h>
 
 struct mutex {
 	atomic_t owner;	// 维护持有锁的pid，-1为空

@@ -1,9 +1,9 @@
 #include <kernel/boot/dtb.h>
 // #include <kernel/util/log.h>
 // #include "lib/kprintf.h"
-#include <kernel/mmu.h>
+
 #include <kernel/types.h>
-#include <kernel/util.h>
+#include <kernel.h>
 // #include "lib/string.h"
 // #include "mm/memlayout.h"
 #include <kernel/param.h>

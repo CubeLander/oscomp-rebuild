@@ -1,7 +1,7 @@
 // #include <kernel/vfs.h>
 #include "forward_declarations.h"
 #include <kernel/mm/vma.h>
-#include <kernel/util.h>
+#include <kernel.h>
 
 int32 icache_init(void);
 struct inode* icache_lookup(struct superblock* sb, uint64 ino);

@@ -4,8 +4,7 @@
 #include "forward_declarations.h"
 #include <kernel/fs/vfs/path.h>
 #include <kernel/types.h>
-#include <kernel/util.h>
-
+#include <kernel/util/spinlock.h>
 struct io_vector;
 struct io_vector_iterator;
 /**

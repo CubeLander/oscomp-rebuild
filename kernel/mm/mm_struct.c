@@ -1,8 +1,8 @@
 #include <kernel/types.h>
 
-#include <kernel/mmu.h>
-#include <kernel/sched.h>
-#include <kernel/util.h>
+
+
+#include <kernel.h>
 
 
 // user_alloc_mm

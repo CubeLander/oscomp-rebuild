@@ -1,6 +1,6 @@
 #include <kernel/device/blockdevice.h>
 #include <kernel/util/print.h>
-#include <kernel/util.h>
+#include <kernel.h>
 #include <kernel/vfs.h>
 
 static void __register_platform_devices(void);

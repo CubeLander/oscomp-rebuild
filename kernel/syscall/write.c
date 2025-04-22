@@ -1,8 +1,8 @@
-#include <kernel/sched.h>
+
 #include <kernel/vfs.h>
 #include <kernel/syscall/syscall.h>
-#include <kernel/mmu.h>
-#include <kernel/util.h>
+
+#include <kernel.h>
 
 
 int64 sys_write(int32 fd, const void* buf, size_t count) {

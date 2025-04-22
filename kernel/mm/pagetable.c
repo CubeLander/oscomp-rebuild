@@ -3,8 +3,8 @@
  * @brief RISC-V SV39 页表管理模块的实现
  */
 
-#include <kernel/mmu.h>
-#include <kernel/util.h>
+
+#include <kernel.h>
 
 // pointer to kernel page director
 pagetable_t g_kernel_pagetable;

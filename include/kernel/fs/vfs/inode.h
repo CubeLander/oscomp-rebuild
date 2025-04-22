@@ -3,7 +3,7 @@
 // #include <kernel/vfs.h>
 #include "forward_declarations.h"
 #include <kernel/mm/vma.h>
-#include <kernel/util.h>
+#include <kernel.h>
 
 extern struct hashtable inode_hashtable;
 

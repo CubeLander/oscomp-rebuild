@@ -2,7 +2,7 @@
 #include <kernel/device/buffer_head.h>
 #include <kernel/mm/kmalloc.h>
 #include <kernel/types.h>
-#include <kernel/util.h>
+#include <kernel.h>
 #include <kernel/util/print.h>
 
 /* Global block device list */

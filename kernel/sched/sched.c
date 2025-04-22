@@ -8,47 +8,46 @@
 #include <kernel/sched/sched.h>
 #include <kernel/sched/task.h>
 #include <kernel/trapframe.h>
-#include <kernel/util.h>
+#include <kernel.h>
 #include <kernel/util/list.h>
 #include <kernel/util/string.h>
 
 struct list_head ready_queue;
-task_t *procs[NPROC];
-
+task_t* procs[NPROC];
 
 //
 // initialize process pool (the procs[] array). added @lab3_1
 //
 void init_scheduler() {
-  // kprintf("init_scheduler: start\n");
-  INIT_LIST_HEAD(&ready_queue);
-  pid_init();
-  memset(procs, 0, sizeof(task_t *) * NPROC);
+	// kprintf("init_scheduler: start\n");
+	INIT_LIST_HEAD(&ready_queue);
+	pid_init();
+	memset(procs, 0, sizeof(task_t*) * NPROC);
 
-  for (int32 i = 0; i < NPROC; ++i) {
-    procs[i] = NULL;
-  }
-  kprintf("Scheduler initiated\n");
+	for (int32 i = 0; i < NPROC; ++i) {
+		procs[i] = NULL;
+	}
+	kprintf("Scheduler initiated\n");
 }
 
-task_t *alloc_empty_process() {
-  for (int32 i = 0; i < NPROC; i++) {
-    if (procs[i] == NULL) {
-      procs[i] = (task_t *)kmalloc(sizeof(task_t));
-      memset(procs[i], 0, sizeof(task_t));
-      return procs[i];
-    }
-  }
-  
-  panic("cannot find any free process structure.\n");
-  return NULL;
+task_t* alloc_empty_process() {
+	for (int32 i = 0; i < NPROC; i++) {
+		if (procs[i] == NULL) {
+			procs[i] = (task_t*)kmalloc(sizeof(task_t));
+			memset(procs[i], 0, sizeof(task_t));
+			return procs[i];
+		}
+	}
+
+	panic("cannot find any free process structure.\n");
+	return NULL;
 }
 //
 // insert a process, proc, into the END of ready queue.
 //
-void insert_to_ready_queue(task_t *proc) {
-  kprintf("going to insert process %d to ready queue.\n", proc->pid);
-  list_add_tail(&proc->ready_queue_node, &ready_queue);
+void insert_to_ready_queue(task_t* proc) {
+	kprintf("going to insert process %d to ready queue.\n", proc->pid);
+	list_add_tail(&proc->ready_queue_node, &ready_queue);
 }
 
 //
@@ -58,131 +57,44 @@ void insert_to_ready_queue(task_t *proc) {
 // (by calling ready_queue_insert), and then call schedule().
 //
 void schedule() {
-  kprintf("schedule: start\n");
-  extern task_t *procs[NPROC];
-  int32 hartid = read_tp();
-  task_t *cur = current;
-  // kprintf("debug\n");
-  if (cur &&
-      ((cur->state == TASK_INTERRUPTIBLE) |
-       (cur->state == TASK_UNINTERRUPTIBLE)) &&
-      cur->ktrapframe == NULL) {
-    cur->ktrapframe = (struct trapframe *)kmalloc(sizeof(struct trapframe));
-    store_all_registers(cur->ktrapframe);
-    // kprintf("cur->ktrapframe->regs.ra=0x%x\n",cur->ktrapframe->regs.ra);
-  }
-  if (list_empty(&ready_queue)) {
-    // by default, if there are no ready process, and all processes are in the
-    // state of FREE and ZOMBIE, we should shutdown the emulated RISC-V
-    // machine.
-    int32 should_shutdown = 1;
+	kprintf("schedule: start\n");
+	if (((current->state == TASK_INTERRUPTIBLE) | (current->state == TASK_UNINTERRUPTIBLE)) && current->schedule_context == NULL) {
+		current->schedule_context = (struct trapframe*)kmalloc(sizeof(struct trapframe));
+		store_all_registers(current->schedule_context);
+	}
+	set_current_task(list_first_entry(&ready_queue, task_t, ready_queue_node));
+	list_del(ready_queue.next);
+	kprintf("going to schedule process %d to run in s-mode.\n", current->pid);
 
-    // for (int32 i = 0; i < NPROC; i++)
-    //   if ((procs[i]) && (procs[i]->exit_state != EXIT_TRACE)) {
-    //     should_shutdown = 0;
-    //     kprintf("ready queue empty, but process %d is not in free/zombie "
-    //            "state:%d\n",
-    //            i, procs[i]->exit_state);
-    //   }
-
-    // // 如果所有进程都在 FREE 或 ZOMBIE 状态，允许关机
-    // if (should_shutdown) {
-    //   // 确保只有 hartid == 0 的核心执行 shutdown
-    //   if (hartid == 0) {
-    //     kprintf("no more ready processes, system shutdown now.\n");
-    //     shutdown(0); // 只有核心 0 执行关机
-    //   }
-    //   // 否则，其他核心等待关机标志
-    //   else {
-    //     while (1) {
-    //       // 自旋等待，直到 hartid == 0 核心完成 shutdown
-    //     }
-    //   }
-    // } else {
-    //   panic(
-    //       "Not handled: we should let system wait for unfinished processes.\n");
-    // }
-  }
-
-  current = container_of(ready_queue.next, task_t, ready_queue_node);
-  list_del(ready_queue.next);
-  if (cur->ktrapframe != NULL) {
-    kprintf("going to schedule process %d to run in s-mode.\n", current->pid);
-
-    restore_all_registers(cur->ktrapframe);
-    kfree(cur->ktrapframe);
-    cur->ktrapframe = NULL;
-    return;
-  } else {
-    kprintf("going to schedule process %d to run in u-mode.\n", current->pid);
-    switch_to(cur);
-  }
+	restore_all_registers(current->schedule_context);
+	return;
 }
 
-void switch_to(task_t *proc) {
-
-  assert(proc);
-  current = proc;
-
-  extern char smode_trap_vector[];
-  write_csr(stvec, (uint64)smode_trap_vector);
-  // set up trapframe values (in process structure) that smode_trap_vector will
-  // need when the process next re-enters the kernel.
-  proc->trapframe->kernel_sp = proc->kstack;     // process's kernel stack
-  proc->trapframe->kernel_satp = read_csr(satp); // kernel page table
-
-  extern char smode_trap_handler[];
-  //proc->trapframe->kernel_trap = (uint64)smode_trap_handler;	//这个字段现在硬编码了
-  proc->trapframe->kernel_schedule = (uint64)schedule;
-
-  // SSTATUS_SPP and SSTATUS_SPIE are defined in kernel/riscv.h
-  // set S Previous Privilege mode (the SSTATUS_SPP bit in sstatus register) to
-  // User mode,to to enable interrupts, and sret destination.
-
-  write_csr(sstatus, ((read_csr(sstatus) & ~SSTATUS_SPP) | SSTATUS_SPIE));
-
-  // set S Exception Program Counter (sepc register) to the elf entry pc.
-  write_csr(sepc, proc->trapframe->epc);
-  kprintf("return to user\n");
-
-  extern void return_to_user(struct trapframe *, uint64);
-  return_to_user(proc->trapframe, MAKE_SATP(proc->mm->pagetable));
+void switch_to_user() {
+	current->kernel_sp = ROUNDUP(read_reg(sp),PAGE_SIZE);     // process's kernel stack
+	write_csr(sstatus, read_csr(sstatus) & ~SSTATUS_SPP);
+	kprintf("return to user\n");
+	extern void return_to_context();
+	return_to_context();
 }
-
-
 
 /**
  * find_process_by_pid - Find a process by its PID
  * @pid: Process ID to search for
  *
  * Searches the process table for a process with the given PID.
- * 
+ *
  * Returns: Pointer to the task_struct if found, NULL if not found
  */
-task_t *find_process_by_pid(pid_t pid) {
-    if (pid <= 0)
-        return NULL;
-    
-    // Search the process table
-    for (int32 i = 0; i < NPROC; i++) {
-        if (procs[i] && procs[i]->pid == pid) {
-            return procs[i];
-        }
-    }
-    
-    return NULL;  // Process not found
-}
+task_t* find_process_by_pid(pid_t pid) {
+	if (pid <= 0) return NULL;
 
+	// Search the process table
+	for (int32 i = 0; i < NPROC; i++) {
+		if (procs[i] && procs[i]->pid == pid) {
+			return procs[i];
+		}
+	}
 
-/**
- * set_current_task - Explicitly set the current task for the calling CPU
- * @task: Task to set as current
- * 
- * Sets the specified task as the current task for the CPU core
- * that called this function. This is primarily used during
- * initialization or special operations like setting up the init task.
- */
-void set_current_task(task_t* task) {
-    int32 hartid = read_tp();
-    current_percpu[hartid] = task;
+	return NULL; // Process not found
 }

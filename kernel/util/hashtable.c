@@ -1,7 +1,5 @@
 #include <errno.h>
-#include <kernel/mmu.h>
-#include <kernel/util/hashtable.h>
-#include <kernel/util/string.h>
+#include <kernel.h>
 
 /**
  * 初始化预先静态分配的哈希表

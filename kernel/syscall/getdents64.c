@@ -1,8 +1,8 @@
-#include <kernel/sched.h>
+
 #include <kernel/vfs.h>
 #include <kernel/syscall/syscall.h>
-#include <kernel/mmu.h>
-#include <kernel/util.h>
+
+#include <kernel.h>
 // 用一种可变长度的缓冲区来存储目录项
 // 标准库会解释传出的buffer
 /* Linux style dirent structure for compatibility */

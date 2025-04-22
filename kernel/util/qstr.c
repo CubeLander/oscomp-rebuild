@@ -1,5 +1,5 @@
 #include <kernel/mm/kmalloc.h>
-#include <kernel/util.h>
+#include <kernel.h>
 
 /* Current hash algorithm */
 static int32 current_hash_algorithm = QSTR_DEFAULT_HASH_ALGORITHM;

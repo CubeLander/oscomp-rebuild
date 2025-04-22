@@ -1,6 +1,6 @@
-#include <kernel/mmu.h>
+
 #include <kernel/time.h>
-#include <kernel/util.h>
+#include <kernel.h>
 #include <kernel/vfs.h>
 
 /**

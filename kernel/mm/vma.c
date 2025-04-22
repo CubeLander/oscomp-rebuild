@@ -1,6 +1,6 @@
 #include <kernel/mm/kmalloc.h>
 #include <kernel/mm/vma.h>
-#include <kernel/util.h>
+#include <kernel.h>
 
 static int32 insert_vm_struct(struct mm_struct* mm, struct vm_area_struct* vma);
 static int32 vma_alloc_page_array(struct vm_area_struct* vma);

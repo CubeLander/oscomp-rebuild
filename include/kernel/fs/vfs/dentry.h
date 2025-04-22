@@ -1,7 +1,7 @@
 #pragma once
 
 #include "forward_declarations.h"
-#include <kernel/util.h>
+#include <kernel.h>
 //#include <kernel/vfs.h>
 #include <kernel/fs/vfs/inode.h>
 
@@ -142,21 +142,9 @@ struct dentry_operations {
 #define DCACHE_HASHED 0x4000         /* In dentry hash table */
 #define DCACHE_IN_LRU 0x8000         /* Dentry在LRU列表中 */
 
-static inline bool dentry_isDir(const struct dentry* dentry) {
-	if (!dentry || !dentry->d_inode) return false;
-	return S_ISDIR(dentry->d_inode->i_mode);
-}
-
-static inline bool dentry_isSymlink(const struct dentry* dentry) {
-	if (!dentry || !dentry->d_inode) return false;
-	return S_ISLNK(dentry->d_inode->i_mode);
-}
-
-static inline bool dentry_isMountpoint(const struct dentry* dentry) {
-	if (!dentry) return false;
-	return (dentry->d_flags & DCACHE_MOUNTED) != 0;
-}
-
+bool dentry_isDir(const struct dentry* dentry);
+bool dentry_isSymlink(const struct dentry* dentry);
+bool dentry_isMountpoint(const struct dentry* dentry);
 bool dentry_isEmptyDir(struct dentry* dentry);
 char* dentry_allocPath2Mount(struct dentry* dentry);
 
