@@ -6,11 +6,12 @@
 #define _RISCV_SPINLOCK_H_
 #include <stdint.h>
 #include <kernel/util/atomic.h>
-
+#include <kernel/riscv.h>
 
 
 typedef struct spinlock{
   atomic_flag lock;
+  uint64 irq_flags;
 } spinlock_t;
 
 #define SPINLOCK_INIT  ATOMIC_FLAG_INIT 
@@ -23,27 +24,20 @@ static inline int32 spinlock_trylock(spinlock_t* lock) {
     return atomic_flag_test_and_set(&lock->lock) == 0;  // 成功返回 1
 }
 
+
 static inline void spinlock_lock(spinlock_t* lock) {
+	
     while (atomic_flag_test_and_set(&lock->lock)) {
         // 自旋等待
     }
+	lock->irq_flags = read_sstatus();
+	write_csr(sstatus, lock->irq_flags & ~0x2); // 设置 SIE (bit 1)
 }
 
 static inline void spinlock_unlock(spinlock_t* lock) {
+	int64 flags = lock->irq_flags;
     atomic_flag_clear(&lock->lock);
-}
-
-static inline void spinlock_unlock_irqrestore(spinlock_t* lock, int64 flags) {
-    atomic_flag_clear(&lock->lock);
-    enable_irqrestore(flags);
-}
-
-static inline int64 spinlock_lock_irqsave(spinlock_t* lock) {
-	int64 flags = disable_irqsave();
-	while (atomic_flag_test_and_set(&lock->lock)) {
-			// 自旋等待
-	}
-	return flags;
+	write_csr(sstatus, flags); 	// 恢复到原来的 SIE (bit 1)
 }
 
 #endif

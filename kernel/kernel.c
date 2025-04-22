@@ -151,19 +151,21 @@ void start_trap() {
 		;
 }
 
+trapframe_t boot_trap_context;
+
 // 这个boot_trapframe应该给每个核都发一个
 void setup_cpu(int cpuid) {
 	write_csr(sscratch, &cpuinfos[cpuid]);
-	cpuinfos[cpuid].hart_id = cpuid;
-	cpuinfos[cpuid].current_task = &idle_tasks[cpuid];
 	write_csr(sstatus, read_csr(sstatus) | SSTATUS_SIE);
-
 	extern char smode_trap_vector[];
 	write_csr(stvec, (uint64)smode_trap_vector);
 	write_csr(sie, read_csr(sie) | SIE_SEIE | SIE_STIE | SIE_SSIE);
+
+	mycpuinfo->hart_id = cpuid;
+	mycpuinfo->current_task = &idle_tasks[cpuid];
 	uint64 ksp = read_reg(sp);
 	current->kernel_sp = ROUNDUP(ksp, PAGE_SIZE);
-
+	current->trap_context = &boot_trap_context;
 	return;
 }
 

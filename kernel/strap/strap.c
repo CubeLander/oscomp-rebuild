@@ -326,3 +326,13 @@ void user_trap_handler() {
 	}
 	write_csr(sstatus, read_csr(sstatus) | SSTATUS_SIE);
 }
+
+void trap_handler(){
+	// 处理内核模式下的陷阱
+	if (read_csr(sstatus) & SSTATUS_SPP) {
+		kernel_trap_handler();
+	} else {
+		// 处理用户模式下的陷阱
+		user_trap_handler();
+	}
+}

@@ -173,13 +173,13 @@ void update_sys_time_from_hw(void)
  */
 time_t do_time(time_t *timer)
 {
-    time_t current = system_time.tv_sec;
+    time_t current_time = system_time.tv_sec;
     
     /* Store the result in timer if it's not NULL */
     if (timer)
-        *timer = current;
+        *timer = current_time;
     
-    return current;
+    return current_time;
 }
 
 

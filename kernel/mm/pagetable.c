@@ -154,12 +154,12 @@ int32 pgt_map_page(pagetable_t pagetable, vaddr_t va, paddr_t pa, int32 perm) {
 	}
 
 	// 锁定页表操作
-	int64 flags = spinlock_lock_irqsave(&pagetable_lock);
+	spinlock_lock(&pagetable_lock);
 
 	// 查找页表项，必要时分配页表
 	pte_t* pte = page_walk(pagetable, aligned_va, 1);
 	if (pte == NULL) {
-		spinlock_unlock_irqrestore(&pagetable_lock, flags);
+		spinlock_unlock(&pagetable_lock);
 		return -1;
 	}
 
@@ -173,7 +173,7 @@ int32 pgt_map_page(pagetable_t pagetable, vaddr_t va, paddr_t pa, int32 perm) {
 
 		} else {
 			// 映射到不同物理页，报错
-			spinlock_unlock_irqrestore(&pagetable_lock, flags);
+			spinlock_unlock(&pagetable_lock);
 			return -1;
 		}
 	} else {
@@ -183,7 +183,7 @@ int32 pgt_map_page(pagetable_t pagetable, vaddr_t va, paddr_t pa, int32 perm) {
 		atomic_inc(&pt_stats.mapped_pages);
 	}
 
-	spinlock_unlock_irqrestore(&pagetable_lock, flags);
+	spinlock_unlock(&pagetable_lock);
 	return 0;
 }
 
@@ -229,7 +229,7 @@ int32 pgt_unmap(pagetable_t pagetable, uint64 va, uint64 size, int32 free_phys) 
 	}
 
 	// 锁定页表操作
-	int64 flags = spinlock_lock_irqsave(&pagetable_lock);
+	spinlock_lock(&pagetable_lock);
 
 	// 逐页取消映射
 	for (uint64 va_page = start_va; va_page < end_va; va_page += PAGE_SIZE) {
@@ -254,7 +254,7 @@ int32 pgt_unmap(pagetable_t pagetable, uint64 va, uint64 size, int32 free_phys) 
 		}
 	}
 
-	spinlock_unlock_irqrestore(&pagetable_lock, flags);
+	spinlock_unlock(&pagetable_lock);
 
 	// 刷新TLB
 	flush_tlb();
@@ -314,7 +314,7 @@ pagetable_t pagetable_copy(pagetable_t src, uint64 start, uint64 end, int32 shar
 	}
 
 	// 锁定页表操作
-	int64 flags = spinlock_lock_irqsave(&pagetable_lock);
+	spinlock_lock(&pagetable_lock);
 
 	// 逐页复制映射
 	for (uint64 va = start; va < end; va += PAGE_SIZE) {
@@ -336,7 +336,7 @@ pagetable_t pagetable_copy(pagetable_t src, uint64 start, uint64 end, int32 shar
 			paddr_t new_page_base = alloc_page()->paddr;
 			if (new_page_base == 0) {
 				// 内存不足，释放已分配内容并返回
-				spinlock_unlock_irqrestore(&pagetable_lock, flags);
+				spinlock_unlock(&pagetable_lock);
 				free_pagetable(dst);
 				return NULL;
 			}
@@ -349,7 +349,7 @@ pagetable_t pagetable_copy(pagetable_t src, uint64 start, uint64 end, int32 shar
 			if (dst_pte == NULL) {
 				put_page((addr_to_page(new_page_base)));
 
-				spinlock_unlock_irqrestore(&pagetable_lock, flags);
+				spinlock_unlock(&pagetable_lock);
 				free_pagetable(dst);
 				return NULL;
 			}
@@ -361,7 +361,7 @@ pagetable_t pagetable_copy(pagetable_t src, uint64 start, uint64 end, int32 shar
 			// 共享物理页: 直接映射到同一物理页
 			pte_t* dst_pte = page_walk(dst, va, 1);
 			if (dst_pte == NULL) {
-				spinlock_unlock_irqrestore(&pagetable_lock, flags);
+				spinlock_unlock(&pagetable_lock);
 				free_pagetable(dst);
 				return NULL;
 			}
@@ -375,7 +375,7 @@ pagetable_t pagetable_copy(pagetable_t src, uint64 start, uint64 end, int32 shar
 			// 在新页表中创建映射，但标记为只读
 			pte_t* dst_pte = page_walk(dst, va, 1);
 			if (dst_pte == NULL) {
-				spinlock_unlock_irqrestore(&pagetable_lock, flags);
+				spinlock_unlock(&pagetable_lock);
 				free_pagetable(dst);
 				return NULL;
 			}
@@ -391,7 +391,7 @@ pagetable_t pagetable_copy(pagetable_t src, uint64 start, uint64 end, int32 shar
 		}
 	}
 
-	spinlock_unlock_irqrestore(&pagetable_lock, flags);
+	spinlock_unlock(&pagetable_lock);
 	return dst;
 }
 

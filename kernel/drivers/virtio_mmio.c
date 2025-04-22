@@ -257,6 +257,8 @@ void virtio_disk_rw(struct buffer_head* b, int write) {
 
 	// Wait for virtio_disk_intr() to say request has finished.
 	while (b->b_end_io == 1) {
+		kprintf("virtio_disk_rw: waiting\n");
+
 		// sleep(b, &disk.vdisk_lock);
 		//  目前是忙等
 	}

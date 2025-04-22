@@ -102,7 +102,7 @@ void init_page_manager() {
 
 // 获取一个空闲页物理地址
 static paddr_t get_free_page_addr(void) {
-	uint32 flags = spinlock_lock_irqsave(&free_page_lock);
+	spinlock_lock(&free_page_lock);
 
 	struct list_head* n = free_page_list.next;
 	if (n) {
@@ -112,7 +112,7 @@ static paddr_t get_free_page_addr(void) {
 		kprintf("get_free_page_addr: no free page\n");
 	}
 
-	spinlock_unlock_irqrestore(&free_page_lock, flags);
+	spinlock_unlock(&free_page_lock);
 	return (paddr_t)n;
 }
 
@@ -127,10 +127,10 @@ static void put_free_page(paddr_t addr) {
 
 	// 插入物理页到空闲链表
 	struct list_head* n = (struct list_head*)addr;
-	uint32 flags = spinlock_lock_irqsave(&free_page_lock);
+	spinlock_lock(&free_page_lock);
 	list_add(n, &free_page_list);
 	free_page_counter++;
-	spinlock_unlock_irqrestore(&free_page_lock, flags);
+	spinlock_unlock(&free_page_lock);
 }
 
 // 根据页框号获取页结构

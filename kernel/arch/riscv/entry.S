@@ -1,48 +1,12 @@
 .section .text
-
-.global smode_trap_vector
-smode_trap_vector:
-
-	/*save context*/
-	csrr t2, sscratch		// t2 = cpuinfo_t cpuinfo
-	ld t1, 0(t2)			// t1 = cpuinfo->current_task
-	ld t0, 0(t1)			// t0 = current_task->trap_context
-	call save_trapframe		// save_trapframe(t0)
-	/*restore kernel sp*/
-	csrr t3, sstatus
-	andi t3, t3, 0x100		// SSTATUS_SPP
-	bnez t3, from_kernel
-	// from user
-	ld sp, 16(t1)			// 恢复内核栈
-from_kernel:
-	/*the main trap handler logic*/
-	call kernel_trap_handler
-.global return_to_context
-return_to_context:
-	/*restore context*/
-	csrr t2, sscratch		// t2 = cpuinfo_t cpuinfo
-	ld t1, 0(t2)			// t1 = cpuinfo->current_task
-	ld t0, 0(t1)			// t0 = current_task->trap_context
-	call restore_trapframe
-	/*开中断*/
-	csrr t0, sstatus
-	ori t0, t0, 0x2
-	csrw sstatus, t0
-	sret
+.globl save_all_registers
+.globl restore_all_registers
 
 
 
-
-
-
-
-
-
-
-.global save_trapframe
-save_trapframe:
-    // Save GPRs (x0–x31)
-    sd x0,   0(t0)
+//use t6 to store all
+.macro save_all_registers
+	    sd x0,   0(t0)
     sd ra,   8(t0)
     sd sp,  16(t0)
     sd gp,  24(t0)
@@ -122,14 +86,10 @@ save_trapframe:
     fsd f29, 536(t0)
     fsd f30, 544(t0)
     fsd f31, 552(t0)
+.endm
 
-    ret
-
-
-.global restore_trapframe
-restore_trapframe:
-    // Restore GPRs (x1–x31)
-    ld ra,   8(t0)
+.macro restore_all_registers
+	    ld ra,   8(t0)
     ld sp,  16(t0)
     ld gp,  24(t0)
     ld tp,  32(t0)
@@ -208,5 +168,35 @@ restore_trapframe:
     fld f29, 536(t0)
     fld f30, 544(t0)
     fld f31, 552(t0)
+.endm
 
-    ret
+
+.global smode_trap_vector
+smode_trap_vector:
+
+	/*save context*/
+	csrr t2, sscratch		// t2 = cpuinfo_t cpuinfo
+	ld t1, 0(t2)			// t1 = cpuinfo->current_task
+	ld t0, 0(t1)			// t0 = current_task->trap_context
+	save_all_registers
+	/*restore kernel sp*/
+	csrr t3, sstatus
+	andi t3, t3, 0x100		// SSTATUS_SPP
+	bnez t3, from_kernel
+	// from user
+	ld sp, 16(t1)			// 恢复内核栈
+from_kernel:
+	/*the main trap handler logic*/
+	call trap_handler
+.global return_to_context
+return_to_context:
+	/*restore context*/
+	csrr t2, sscratch		// t2 = cpuinfo_t cpuinfo
+	ld t1, 0(t2)			// t1 = cpuinfo->current_task
+	ld t0, 0(t1)			// t0 = current_task->trap_context
+	restore_all_registers
+	/*开中断*/
+	csrr t0, sstatus
+	ori t0, t0, 0x2
+	csrw sstatus, t0
+	sret

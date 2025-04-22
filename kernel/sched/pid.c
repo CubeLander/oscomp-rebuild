@@ -15,7 +15,7 @@ void pid_init() {
 // PID分配核心逻辑
 pid_t pid_alloc(void) {
 
-  int64 irq_flags = spinlock_lock_irqsave(&manager.lock);
+  spinlock_lock(&manager.lock);
 
   for (int32 i = 0; i < PID_MAX; i++) {
     int32_t current_pid = (manager.next_pid + i) % PID_MAX;
@@ -28,12 +28,12 @@ pid_t pid_alloc(void) {
     if (!(manager.pid_map[byte_idx] & (1 << bit_idx))) {
       manager.pid_map[byte_idx] |= (1 << bit_idx);
       manager.next_pid = (current_pid + 1) % PID_MAX;
-      spinlock_unlock_irqrestore(&manager.lock, irq_flags); // 解锁
+      spinlock_unlock(&manager.lock); // 解锁
       return current_pid;                                   // 成功
     }
   }
 
-  spinlock_unlock_irqrestore(&manager.lock, irq_flags);
+  spinlock_unlock(&manager.lock);
   return (-EAGAIN); // 资源耗尽
 }
 
@@ -42,11 +42,11 @@ void pid_free(pid_t pid) {
   if (pid <= 0 || pid >= PID_MAX)
     panic("pid_free: wrong pid\n");
 
-  int64 irq_flags = spinlock_lock_irqsave(&manager.lock);
+  spinlock_lock(&manager.lock);
 
   int32 byte_idx = pid / 8;
   int32 bit_idx = pid % 8;
   manager.pid_map[byte_idx] &= ~(1 << bit_idx);
 
-  spinlock_unlock_irqrestore(&manager.lock, irq_flags);
+  spinlock_unlock(&manager.lock);
 }
