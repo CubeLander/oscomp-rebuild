@@ -9,3 +9,6 @@
 	path = vendor/musl
 	url = https://github.com/CubeLander/musl.git
 	branch = master
+[submodule "vendor/dtc"]
+	path = vendor/dtc
+	url = https://github.com/CubeLander/dtc.git
