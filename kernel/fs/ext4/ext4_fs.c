@@ -35,16 +35,16 @@ int ext4_adapter_mount(struct fstype* fs, uint64_t rwflag,const void* data) {
 
 	kprintf("ext4_adapter_mount: before mount\n");
 	ret = ext4_mount("virtio", "/", false);
-	printf("ext4_adapter_mount: ext4_mount returns %d\n", ret);
+	kprintf("ext4_adapter_mount: ext4_mount returns %d\n", ret);
 	if (ret != EOK) {
 		return ret;
 	}
 	ext4_mount_setup_locks("virtio", &ext4_lock_ops);
 
-	printf("ext4_adapter_mount: before getting superblock\n");
+	kprintf("ext4_adapter_mount: before getting superblock\n");
 	/* Get superblock. */
 	ext4_get_sblock("virtio", (struct ext4_sblock**)&fs->fs_data);
-	printf("ext4_adapter_mount: after getting super block\n");
+	kprintf("ext4_adapter_mount: after getting super block\n");
 
 	return 0;
 }

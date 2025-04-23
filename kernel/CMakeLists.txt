@@ -14,7 +14,7 @@ set(CMAKE_CXX_COMPILER riscv64-linux-gnu-g++)
 set(CMAKE_ASM_COMPILER riscv64-linux-gnu-gcc)
 
 # 编译标志
-set(CMAKE_C_FLAGS "-Wall -Werror -Wl,-Map=kernel.map -nostartfiles -gdwarf-3 -fno-builtin -nostartfiles -nostdinc -ffreestanding -D__NO_INLINE__ -mcmodel=medany -g -Og -std=gnu99 -Wno-unused -Wno-attributes -Wl,--no-relax -Wl,--build-id=none -Wl,-z,notext -fno-delete-null-pointer-checks -fno-PIE -fno-pic -fno-omit-frame-pointer -lgcc")
+set(CMAKE_C_FLAGS "-Wall -Werror -Wl,-Map=kernel.map -nostdlib -nostartfiles -gdwarf-3 -fno-builtin -nostartfiles -nostdinc -ffreestanding -D__NO_INLINE__ -mcmodel=medany -g -Og -std=gnu99 -Wno-unused -Wno-attributes -Wl,--no-relax -Wl,--build-id=none -Wl,-z,notext -fno-delete-null-pointer-checks -fno-PIE -fno-pic -fno-omit-frame-pointer -lgcc")
 # 设置静态链接
 set(CMAKE_EXE_LINKER_FLAGS "-static  -Xlinker -T ${CMAKE_SOURCE_DIR}/kernel/kernel.lds" CACHE STRING "Static linking flags" FORCE)
 # Apply the same flags to ASM
@@ -51,6 +51,6 @@ add_dependencies(kernel.elf musl_build lwext4)
 # 直接链接库文件，确保它们已经构建完成
 target_link_libraries(kernel.elf PRIVATE 
     ${CMAKE_BINARY_DIR}/lib/liblwext4.a
-    ${CMAKE_BINARY_DIR}/lib/libc.a
+    # ${CMAKE_BINARY_DIR}/lib/libc.a
 
 )

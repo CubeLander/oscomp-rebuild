@@ -1,6 +1,5 @@
 
 #include <kernel.h>
-#include <string.h>
 
 struct mm_struct init_mm;
 

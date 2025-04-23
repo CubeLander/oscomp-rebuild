@@ -1,6 +1,8 @@
 #!/bin/bash
 set -ex
 echo "当前工作目录是：$(pwd)"
+cd "$(dirname "$0")"
+echo "当前工作目录是：$(pwd)"
 # 进入源码目录
 cd "../vendor/musl"
 
@@ -29,7 +31,9 @@ make -j32
 
 # 直接复制库文件到目标位置而不是安装
 echo "复制 musl 库到目标位置..."
-cp lib/libc.a "../oscomp-rebuild/build/lib/libc.a"
+echo "当前工作目录是：$(pwd)"
+mkdir -p ../../build/lib
+cp lib/libc.a "../../build/lib/libc.a"
 
 # 安装头文件到临时目录
 make install
