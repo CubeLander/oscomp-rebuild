@@ -74,7 +74,7 @@ struct vm_area_struct* vm_area_setup(struct mm_struct* mm, uint64 addr, uint64 l
  * 也可以只填充vma的部分页
  */
 int32 populate_vma(struct vm_area_struct* vma, vaddr_t va, size_t length, int32 prot) {
-	kprintf("populate_vma: start with vma = %lx, va = %lx, length = %lx, prot = %lx\n", vma, va, length, prot);
+	//kprintf("populate_vma: start with vma = %lx, va = %lx, length = %lx, prot = %lx\n", vma, va, length, prot);
 	for (size_t offset = 0, page_idx = offset / PAGE_SIZE; offset < length; offset += PAGE_SIZE, page_idx++) {
 		if (vma->pages[page_idx]) {
 			continue;
@@ -85,7 +85,7 @@ int32 populate_vma(struct vm_area_struct* vma, vaddr_t va, size_t length, int32 
 			return -ENOMEM;
 		}
 		vma->pages[page_idx] = page;
-		kprintf("populate_vma: calling pgt_map_page with va = %lx, pa = %lx, prot = %lx\n", va + offset, page->paddr, prot);
+		//kprintf("populate_vma: calling pgt_map_page with va = %lx, pa = %lx, prot = %lx\n", va + offset, page->paddr, prot);
 
 		int32 ret = pgt_map_page(vma->vm_mm->pagetable, va + offset, page->paddr, prot_to_type(prot, vma->vm_flags & VM_USER));
 		if (unlikely(ret)) {

@@ -161,7 +161,7 @@ void rrsched() {
 }
 
 void external_trap_handler() {
-	kprintf("external_trap_handler: start\n");
+	//kprintf("external_trap_handler: start\n");
 	int irq = plic_claim();
 	switch (irq) {
 	case VIRTIO0_IRQ:

@@ -60,7 +60,7 @@ void init_page_manager() {
 	uint64 pke_kernel_size = kernel_end - KERN_BASE;
 	kprintf("PKE kernel start 0x%lx, PKE kernel end: 0x%lx, PKE kernel size: "
 	        "0x%lx.\n",
-	        KERN_BASE, kernel_end, pke_kernel_size);
+	        (uint64)KERN_BASE, kernel_end, pke_kernel_size);
 	// 空闲内存起始地址必须页对齐
 	paddr_t free_mem_start_addr = ROUNDUP(kernel_end, PAGE_SIZE);
 
@@ -87,7 +87,7 @@ void init_page_manager() {
 	INIT_LIST_HEAD(&page_lru_list);
 	spinlock_init(&page_lru_lock);
 
-	kprintf("Page subsystem initialized: %d pages, map size: %lx bytes at 0x%lx\n", total_pages, page_map_size, (paddr_t)page_pool);
+	kprintf("Page subsystem initialized: %d pages, map size: 0x%lx bytes at 0x%lx\n", total_pages, page_map_size, (paddr_t)page_pool);
 
 	// 返回空闲内存开始地址（页结构后的地址）
 	paddr_t free_start = free_mem_start_addr + page_map_size;

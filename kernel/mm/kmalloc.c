@@ -102,7 +102,7 @@ void kmem_init(void) {
 	}
   }
   //kprintf("kmalloc: end\n");
-  kprintf("kmalloc: allocated 0x%lx bytes at 0x%lx\n", size, mem);
+  //kprintf("kmalloc: allocated 0x%lx bytes at 0x%lx\n", size, mem);
   return mem;
 }
 

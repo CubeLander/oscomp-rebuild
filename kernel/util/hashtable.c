@@ -24,7 +24,7 @@ int32 hashtable_setup(struct hashtable* ht, uint32 initial_size, uint32 max_load
 	ht->buckets = kmalloc(initial_size * sizeof(struct hash_bucket));
 	if (!ht->buckets) return -ENOMEM;
 
-	check_address_mapping(g_kernel_pagetable, (vaddr_t)ht->buckets);
+	//check_address_mapping(g_kernel_pagetable, (vaddr_t)ht->buckets);
 	/* 初始化每个桶的链表头 */
 	for (i = 0; i < initial_size; i++) {
 		INIT_LIST_HEAD(&ht->buckets[i].head);
