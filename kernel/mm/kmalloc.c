@@ -74,7 +74,7 @@ void kmem_init(void) {
   size_t total_size = size + HEADER_SIZE;
 
   // For small allocations (up to 2048 bytes), use slab allocator
-  if (total_size <= 2048) {
+  if (total_size <= 2024) {
     //kprintf("kmalloc: small\n");
 
     struct kmalloc_header *header = slab_alloc(total_size);

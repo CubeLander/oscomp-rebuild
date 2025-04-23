@@ -91,6 +91,8 @@ void recordMem(void* value) {
 static char strBuf[128];
 static void* parseFdtNode(struct FDTHeader* fdtHeader, void* node, char* parent) {
 	char* node_name;
+
+
 	while (readBigEndian32(node) == FDT_NOP) {
 		node += 4;
 	}
@@ -118,11 +120,10 @@ static void* parseFdtNode(struct FDTHeader* fdtHeader, void* node, char* parent)
 				node += 4;
 				uint32_t nameoff = readBigEndian32(node);
 				node += 4;
-				char* name = (char*)(node + fdtHeader->off_dt_strings + nameoff);
-
-				if (name[0] != '\0') {
-					kprintf("parseFdtNode: property name:   %s\n", name);
-				}
+				kprintf("parseFdtNode: property nameoff: %d\n", nameoff);
+				char* name = (char*)(node  + nameoff);
+				//+ fdtHeader->off_dt_strings
+				kprintf("parseFdtNode: property name:   %s\n", name);
 				kprintf("parseFdtNode: property len:    %d\n", len);
 
 				// values需要以info形式输出
@@ -175,7 +176,21 @@ void parseDtb(uint64 dtbEntry) {
 
 	struct FDTHeader* fdt_h = (struct FDTHeader*)dtbEntry;
 	parserFdtHeader(fdt_h);
+	kprintf("parseFdtNode: name strings:    \n");
+	kprintf("parseDtb: string offset = %d\n",fdt_h->off_dt_strings);
+	kprintf("parseDtb: string offset = %d\n",readBigEndian32(&fdt_h->off_dt_strings));
 
+	for(int i = 0;i < fdt_h->totalsize;i++){
+		char c = *((char*)fdt_h  +  i + 5);
+		*((char*)fdt_h  +  i + 5) = '\0';
+		if(strcmp((char*)fdt_h + i, "riscv") == 0){
+			kprintf("\nparseDtb: string offset = %d, address at 0x%x\n",i,(char*)fdt_h  +  i);
+		}
+		*((char*)fdt_h  +  i + 5) = c;
+		kprintf("%c", *((char*)fdt_h  +  i));
+
+	}
+	kprintf("\n");
 	void* node = (void*)(dtbEntry + fdt_h->off_dt_struct);
 	do {
 		node = parseFdtNode(fdt_h, node, "root");

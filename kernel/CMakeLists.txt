@@ -46,7 +46,7 @@ target_include_directories(kernel.elf PRIVATE
 
 # 关键修改: 确保内核依赖于musl库和lwext4库的构建
 # 需要明确依赖musl_build目标，因为它是ExternalProject创建的实际构建目标
-add_dependencies(kernel.elf musl_build lwext4)
+add_dependencies(kernel.elf musl_build lwext4 libfdt)
 
 # 直接链接库文件，确保它们已经构建完成
 target_link_libraries(kernel.elf PRIVATE 

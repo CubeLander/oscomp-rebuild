@@ -7,7 +7,7 @@ echo "当前工作目录是：$(pwd)"
 cd "../vendor/musl"
 
 # 确保输出目录存在
-mkdir -p "../build/lib"
+mkdir -p "../../build/lib"
 
 # 配置musl - 注意：我们仍然需要一个临时安装目录来获取头文件
 TEMP_INSTALL_DIR="../build/vendor/musl/temp_install"

@@ -21,13 +21,26 @@ add_custom_command(
 
 add_custom_target(lwext4 DEPENDS ${CMAKE_BINARY_DIR}/lib/liblwext4.a)
 
+# libfdt库 - 使用脚本构建
+add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/lib/libfdt.a
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/lib
+    COMMAND bash ${CMAKE_SOURCE_DIR}/script/build-libfdt.sh
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Building libfdt library"
+    VERBATIM
+)
+
+add_custom_target(libfdt DEPENDS ${CMAKE_BINARY_DIR}/lib/libfdt.a)
+
+
 # busybox - 必需
 add_subdirectory(busybox)
 
 # 创建一个整合目标，可以一次性构建所有第三方库
 add_custom_target(
     build_all_vendor
-    DEPENDS lwext4 musl_build busybox_build
+    DEPENDS lwext4 musl_build busybox_build libfdt
     COMMENT "Building all third-party libraries"
 )
 

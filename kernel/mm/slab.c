@@ -11,16 +11,19 @@
 
 // Slab sizes including allocation headers (8 bytes)
 // These sizes are the total allocation size
-#define SLAB_SIZES_COUNT 8
+#define SLAB_SIZES_COUNT 11
 const size_t slab_sizes[SLAB_SIZES_COUNT] = {
-    16,   // 8 bytes kernel data + 8 byte header
-    32,   // 24 bytes kernel data + 8 byte header
-    64,   // 56 bytes kernel data + 8 byte header
-    128,  // 120 bytes kernel data + 8 byte header
-    256,  // 248 bytes kernel data + 8 byte header
-    512,  // 504 bytes kernel data + 8 byte header
-    1024, // 1016 bytes kernel data + 8 byte header
-    2048  // 2040 bytes kernel data + 8 byte header
+	8,		// 499
+    16,		// 251
+	24,		// 168
+	32,		// 126
+	40,		// 101
+	72,		// 56
+    144,	// 28
+    264,	// 15
+	576,	// 7
+	1344,	// 3 objs
+    2024 	// 2 objs
 };
 
 // Global array of slab caches
@@ -98,7 +101,8 @@ static struct slab_header *slab_header_init(size_t obj_size) {
   uint32 usable_size =
       PAGE_SIZE - sizeof(struct slab_header) - bitmap_size;
   uint32 total_objs = usable_size / obj_size;
-
+  kprintf("slab_header_init:slab_header_size=%d, obj_size = %d, usable_size = %d, total_objs = %d\n",sizeof(struct slab_header),
+		 obj_size, usable_size, total_objs);
   // Initialize slab header
   INIT_LIST_HEAD(&slab->list);
   slab->page = page;
@@ -234,7 +238,7 @@ void slab_init(void) {
     INIT_LIST_HEAD(&cache->slabs_free);
     cache->free_objects = 0;
 
-    kprintf("  Initialized slab cache for size %d bytes\n", cache->obj_size);
+    //kprintf("  Initialized slab cache for size %d bytes\n", cache->obj_size);
   }
 }
 
